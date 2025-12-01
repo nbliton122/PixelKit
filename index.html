@@ -176,6 +176,90 @@
     font-weight: 600;
   }
 
+  /* -------- Enhanced styling for 2048x1152 resizer (added) -------- */
+  #resizer2048 {
+    padding: 28px;
+    border-radius: 14px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.014), rgba(255,255,255,0.01));
+    border: 1px solid rgba(0,255,255,0.06);
+    box-shadow: 0 10px 40px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.012);
+    position: relative;
+  }
+  #resizer2048 .panel {
+    border-radius: 12px;
+    padding: 18px;
+    margin-top: 12px;
+    background: linear-gradient(180deg, rgba(0,0,0,0.18), rgba(255,255,255,0.01));
+    border: 1px solid rgba(255,255,255,0.03);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.6), 0 0 30px rgba(0,240,255,0.02);
+  }
+  #resizer2048 .row {
+    display:flex;
+    gap:12px;
+    align-items:center;
+    flex-wrap:wrap;
+    margin-top:12px;
+  }
+  #resizer2048 label { color:var(--muted); min-width:120px; }
+  #resizer2048 select, #resizer2048 input[type="number"] {
+    max-width: 260px;
+    background: linear-gradient(180deg, #061426, #071226);
+    border: 1px solid rgba(255,255,255,0.06);
+    padding:10px 12px;
+  }
+  #resizer2048 .actions {
+    margin-top:16px;
+    display:flex;
+    gap:10px;
+    align-items:center;
+  }
+  #resizer2048 .generate {
+    padding:12px 18px;
+    border-radius:12px;
+    font-weight:800;
+    letter-spacing:0.6px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+  }
+  #resizer2048 #download2048 {
+    padding:12px 14px;
+    border-radius:12px;
+    border: 1px solid rgba(255,255,255,0.06);
+    background: linear-gradient(90deg,var(--neon-cyan),var(--neon-mag));
+    color:#00141a;
+    font-weight:700;
+    display:none;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.55);
+  }
+  #resizer2048 .preview-card {
+    margin-top:18px;
+    display:flex;
+    gap:16px;
+    align-items:flex-start;
+    flex-wrap:wrap;
+  }
+  #resizer2048 .preview-card img {
+    border-radius:10px;
+    max-width:420px;
+    border:1px solid rgba(255,255,255,0.04);
+    box-shadow: 0 14px 40px rgba(0,0,0,0.6);
+  }
+  #resizer2048 .meta { color:var(--muted); font-size:13px; }
+  #resizer2048::before{
+    content:"";
+    position:absolute;
+    left:12px; top:12px;
+    width:72px; height:24px;
+    border-radius:8px;
+    background: linear-gradient(90deg, rgba(0,240,255,0.06), rgba(192,132,252,0.03));
+    box-shadow: 0 6px 24px rgba(0,240,255,0.03);
+    pointer-events:none;
+  }
+  @media (max-width:900px){
+    #resizer2048 .row { flex-direction:column; align-items:stretch; }
+    #resizer2048 .preview-card img { max-width:100%; }
+  }
+  /* ---------------------------------------------------------------- */
+
   footer{margin-top:24px;color:var(--muted);text-align:center}
   @media(max-width:1100px){ .preview-box{width:100%;order:2} .controls{order:1} .res500-wrap{flex-direction:column} }
   @media(max-width:900px){.home{grid-template-columns:repeat(2,1fr)} .preview-wrap{flex-direction:column}}
@@ -332,54 +416,56 @@ https://example.net/article
       </div>
     </section>
 
-    <!-- 2048x1152 Resizer -->
+    <!-- 2048x1152 Resizer (enhanced UI) -->
     <section id="resizer2048" class="tool-page" aria-hidden="true">
       <button class="back" onclick="showHome()">← Back to Tools</button>
       <h2 style="color:var(--neon-cyan);font-family:Orbitron">2048 × 1152 Photo Resizer</h2>
 
-      <div class="file-input">
-        <input type="file" id="file2048" accept="image/*">
-        <div style="margin-top:10px;color:var(--muted);font-size:13px">Supported: PNG / JPG / WEBP — client-side</div>
-      </div>
-
-      <div style="margin-top:12px;display:flex;gap:12px;flex-wrap:wrap;align-items:center">
-        <label style="min-width:100px">Mode</label>
-        <select id="mode2048" style="max-width:260px">
-          <option value="fit">Fit (preserve aspect, max 2048×1152)</option>
-          <option value="crop">Crop (center → exact 2048×1152)</option>
-        </select>
-
-        <label style="min-width:100px">Output format</label>
-        <select id="outfmt2048" style="max-width:200px">
-          <option value="image/png">PNG</option>
-          <option value="image/jpeg">JPG</option>
-          <option value="image/webp">WEBP</option>
-        </select>
-
-        <label style="min-width:100px">Quality (JPG/WEBP)</label>
-        <input id="outq2048" type="number" min="10" max="100" value="92" style="width:110px">
-      </div>
-
-      <div style="margin-top:14px">
-        <button onclick="generate2048()">Generate 2048×1152</button>
-        <button id="download2048" style="display:none;margin-left:8px" onclick="downloadGenerated()">Download</button>
-        <span id="status2048" style="margin-left:12px;color:var(--muted)"></span>
-      </div>
-
-      <div class="preview-wrap" id="previewWrap" style="display:none">
-        <img id="previewImg" class="preview-img" alt="Preview">
-        <div class="meta">
-          <div style="color:var(--muted)">Original:</div>
-          <div id="origMeta2048" style="margin-bottom:8px;color:var(--muted)"></div>
-
-          <div style="color:var(--muted)">Generated (2048×1152):</div>
-          <div id="genMeta2048" style="margin-bottom:8px;color:var(--muted)"></div>
-
-          <div id="hint2048" style="color:var(--muted);font-size:13px">Tip: use "Crop" for exact wallpaper-sized output.</div>
+      <div class="panel">
+        <div class="file-input">
+          <input type="file" id="file2048" accept="image/*">
+          <div style="margin-top:8px;color:var(--muted);font-size:13px">Supported: PNG / JPG / WEBP — client-side</div>
         </div>
-      </div>
 
-      <div id="canvasContainer" style="display:none"></div>
+        <div class="row">
+          <label>Mode</label>
+          <select id="mode2048">
+            <option value="fit">Fit (preserve aspect, max 2048×1152)</option>
+            <option value="crop">Crop (center → exact 2048×1152)</option>
+          </select>
+
+          <label>Output format</label>
+          <select id="outfmt2048">
+            <option value="image/png">PNG</option>
+            <option value="image/jpeg">JPG</option>
+            <option value="image/webp">WEBP</option>
+          </select>
+
+          <label>Quality (JPG/WEBP)</label>
+          <input id="outq2048" type="number" min="10" max="100" value="92">
+        </div>
+
+        <div class="actions">
+          <button class="generate" onclick="generate2048()">Generate 2048×1152</button>
+          <button id="download2048" onclick="downloadGenerated()">Download</button>
+          <span id="status2048" style="margin-left:12px;color:var(--muted)"></span>
+        </div>
+
+        <div class="preview-card" id="previewWrap" style="display:none">
+          <img id="previewImg" class="preview-img" alt="Preview">
+          <div>
+            <div class="meta"><strong style="color:var(--neon-cyan)">Original</strong></div>
+            <div id="origMeta2048" class="meta" style="margin-bottom:10px"></div>
+
+            <div class="meta"><strong style="color:var(--neon-cyan)">Generated</strong></div>
+            <div id="genMeta2048" class="meta" style="margin-bottom:8px"></div>
+
+            <div id="hint2048" class="meta">Tip: use "Crop" for exact wallpaper-sized output.</div>
+          </div>
+        </div>
+
+        <div id="canvasContainer" style="display:none"></div>
+      </div>
     </section>
 
     <!-- 500x500 Interactive Resizer -->
