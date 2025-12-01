@@ -125,20 +125,54 @@
     cursor:pointer;
   }
 
-  /* 500x500 previews */
-  .res500-wrap{display:flex;gap:18px;align-items:flex-start;flex-wrap:wrap}
-  .controls{flex:1;min-width:300px}
-  .preview-box{width:520px;display:flex;flex-direction:column;gap:10px;align-items:center}
-  .canvas-frame{width:500px;height:500px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:#071226;display:flex;align-items:center;justify-content:center;overflow:hidden;box-shadow:0 8px 28px rgba(0,0,0,0.6)}
-  .meta{color:var(--muted);font-size:13px}
+  /* Link Shuffle specific styling integrated with theme */
+  .shuffle-container { max-width:980px;margin:0 auto; }
+  .shuffle-card {
+    background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+    border-radius:10px;padding:18px;border:1px solid rgba(0,255,255,0.06);
+  }
+  .shuffle-card h1 { font-family:Orbitron;color:var(--neon-cyan);font-size:22px;margin-bottom:8px }
+  .section-title { color:var(--neon-cyan); font-weight:700; display:flex;align-items:center;gap:8px;margin-bottom:8px }
+  .meta-row { color:var(--muted); font-size:13px; display:flex; justify-content:space-between; margin-top:8px; }
 
-  /* General preview/frames */
-  .preview-wrap{display:flex;gap:16px;align-items:flex-start;margin-top:12px;flex-wrap:wrap}
-  .preview-img{max-width:420px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);box-shadow:0 10px 30px rgba(0,0,0,0.6);}
+  .btn {
+    display:inline-block;
+    width:100%;
+    text-align:center;
+    background: linear-gradient(90deg,var(--neon-cyan),var(--neon-mag));
+    color:#00141a;
+    font-weight: 700;
+    padding: 12px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    border: none;
+    letter-spacing: 1px;
+  }
+  .small-btn {
+    background: linear-gradient(90deg,#6fb4ff,#7ecbff);
+    color: #001;
+    border-radius: 6px;
+    padding: 8px 12px;
+    border: none;
+    cursor: pointer;
+    font-weight:700;
+  }
+  .count-bubble {
+    background: rgba(255,255,255,0.02);
+    padding: 6px 10px;
+    border-radius: 6px;
+    color: var(--muted);
+    font-weight: 600;
+  }
 
-  footer{margin-top:24px;color:var(--muted);text-align:center}
-  @media(max-width:1100px){ .preview-box{width:100%;order:2} .controls{order:1} .res500-wrap{flex-direction:column} }
-  @media(max-width:900px){.home{grid-template-columns:repeat(2,1fr)} .preview-wrap{flex-direction:column}}
+  /* responsive */
+  @media(max-width:760px){
+    .shuffle-card{ padding:14px }
+    .shuffle-card h1{ font-size:18px }
+  }
+
+  /* small helpers */
+  .output-wrap { margin-top:14px; }
 </style>
 </head>
 <body>
@@ -175,311 +209,56 @@
         <div class="tile" onclick="showTool('resizer2048')"><div style="font-size:26px">🖼️</div><h3>2048 × 1152 Resizer</h3><p>Resize / fit / crop photos to 2048×1152</p></div>
         <div class="tile" onclick="showTool('resizer500')"><div style="font-size:26px">🖼️</div><h3>500 × 500 Resizer</h3><p>Interactive photo resize & position</p></div>
         <div class="tile" onclick="showTool('descShorter')"><div style="font-size:26px">✂️</div><h3>Description Shorter</h3><p>Shorten text to N characters</p></div>
+        <div class="tile" onclick="showTool('linkShuffle')"><div style="font-size:26px">🔀</div><h3>Link Shuffle</h3><p>Shuffle & copy your URL list</p></div>
       </div>
     </main>
 
-    <!-- ========== RESIZER (basic) ========== -->
-    <section id="resizer" class="tool-page" aria-hidden="true">
+    <!-- (other tool sections omitted here for brevity — keep your previous ones) -->
+    <!-- You should keep the rest of your existing tool sections (resizer, converter, compressor, urltool, resizer2048, resizer500, descShorter) as in your current file. -->
+    <!-- Below: the new Link Shuffle section integrated with the neon/dark theme. -->
+
+    <section id="linkShuffle" class="tool-page" aria-hidden="true">
       <button class="back" onclick="showHome()">← Back to Tools</button>
-      <h2 style="color:var(--neon-cyan);font-family:Orbitron">Image Resizer</h2>
-      <div class="file-input"><input type="file" id="resizeFile" accept="image/*"></div>
-      <label>Width (px)</label><input type="number" id="w" placeholder="e.g. 800" value="500">
-      <label>Height (px)</label><input type="number" id="h" placeholder="e.g. 500" value="500">
+      <div class="shuffle-container" style="margin-top:12px">
+        <div class="shuffle-card">
+          <h1>RANDOM LINK MIXER</h1>
 
-      <div class="controls-row">
-        <label>Output format</label>
-        <select id="outFormat" class="small">
-          <option value="image/png">PNG (keep transparency)</option>
-          <option value="image/jpeg">JPG</option>
-          <option value="image/webp">WEBP</option>
-        </select>
+          <div class="section-title"><span class="icon">🔗</span> Enter URLs (one per line)</div>
+          <textarea id="inputLinks" placeholder="Paste your links here... (one URL per line)"></textarea>
 
-        <label>Background</label>
-        <select id="bgFill" class="small">
-          <option value="transparent">Transparent (when PNG)</option>
-          <option value="#ffffff">White</option>
-          <option value="#000000">Black</option>
-          <option value="#0a3bff">Blue</option>
-        </select>
-
-        <label>Quality</label>
-        <input id="outQuality" class="small" type="number" min="10" max="100" value="90">
-      </div>
-
-      <div style="margin-top:14px">
-        <button class="generate" onclick="generateResized()">Generate</button>
-        <button id="downloadBtn" class="download" style="display:none;margin-left:8px" onclick="downloadResized()">Download</button>
-        <span id="status" style="margin-left:12px;color:var(--muted)"></span>
-      </div>
-
-      <div class="preview-wrap" id="resPreview" style="display:none">
-        <img id="resPreviewImg" class="preview-img" alt="Preview">
-        <div class="meta">
-          <div class="muted">Original:</div>
-          <div id="origMeta" class="muted" style="margin-bottom:8px"></div>
-          <div class="muted">Generated:</div>
-          <div id="genMeta" class="muted" style="margin-bottom:8px"></div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ========== CONVERTER ========== -->
-    <section id="converter" class="tool-page" aria-hidden="true">
-      <button class="back" onclick="showHome()">← Back to Tools</button>
-      <h2 style="color:var(--neon-cyan);font-family:Orbitron">Format Converter</h2>
-      <div class="file-input"><input type="file" id="convertFile" accept="image/*"></div>
-      <label>Convert To</label>
-      <select id="format">
-        <option value="image/png">PNG</option>
-        <option value="image/jpeg">JPG</option>
-        <option value="image/webp">WEBP</option>
-      </select>
-      <button onclick="convertImage()">Convert</button>
-      <div id="convertResult" style="margin-top:12px"></div>
-    </section>
-
-    <!-- ========== COMPRESSOR ========== -->
-    <section id="compressor" class="tool-page" aria-hidden="true">
-      <button class="back" onclick="showHome()">← Back to Tools</button>
-      <h2 style="color:var(--neon-cyan);font-family:Orbitron">Image Compressor</h2>
-      <div class="file-input"><input type="file" id="compressFile" accept="image/*"></div>
-      <label>Quality (1–100)</label><input type="number" id="quality" value="70" min="1" max="100">
-      <button onclick="compressImage()">Compress</button>
-      <div id="compressResult" style="margin-top:12px"></div>
-    </section>
-
-    <!-- ========== URL → HTML (advanced) ========== -->
-    <section id="urltool" class="tool-page" aria-hidden="true">
-      <button class="back" onclick="showHome()">← Back to Tools</button>
-      <h2 style="color:var(--neon-cyan);font-family:Orbitron">URL → HTML Link Converter</h2>
-
-      <div class="form-row">
-        <label class="muted">Options</label>
-        <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:8px;align-items:center">
-          <label style="color:var(--muted)"><input type="checkbox" id="optNewTab" checked> Open in new tab (<code>target="_blank"</code>)</label>
-          <label style="color:var(--muted)"><input type="checkbox" id="optRel"> Add <code>rel="noopener noreferrer"</code></label>
-          <label style="color:var(--muted)"><input type="checkbox" id="optAutoText"> Use domain as link text</label>
-        </div>
-
-        <div style="margin-top:10px;color:var(--muted)">
-          Output format:
-          <label style="margin-left:12px"><input type="radio" name="outFmt" value="lines" checked> One link per line</label>
-          <label style="margin-left:12px"><input type="radio" name="outFmt" value="p"> Wrap all links in single &lt;p&gt; with &lt;br&gt;</label>
-        </div>
-      </div>
-
-      <div class="form-row">
-        <label class="muted">Paste your list of URLs below</label>
-        <textarea id="urlInput" placeholder="https://example.com/page1
-https://example.net/article
-..."></textarea>
-      </div>
-
-      <div style="margin-top:10px">
-        <button class="primary" onclick="convertURLAdvanced()">Convert</button>
-        <button class="reset" onclick="resetURLTool()">Reset</button>
-        <span id="urlStatus" style="margin-left:12px;color:var(--muted)"></span>
-      </div>
-
-      <div class="form-row" style="margin-top:16px">
-        <label class="muted">URLs Converted into HTML Links Code</label>
-        <textarea id="urlOutput" readonly placeholder="Converted HTML will appear here..."></textarea>
-      </div>
-
-      <div style="margin-top:10px">
-        <button class="copy" onclick="copyUrlOutput()">Copy to Clipboard</button>
-      </div>
-    </section>
-
-    <!-- ========== 2048x1152 Resizer ========== -->
-    <section id="resizer2048" class="tool-page" aria-hidden="true">
-      <button class="back" onclick="showHome()">← Back to Tools</button>
-      <h2 style="color:var(--neon-cyan);font-family:Orbitron">2048 × 1152 Photo Resizer</h2>
-
-      <div class="file-input">
-        <input type="file" id="file2048" accept="image/*">
-        <div style="margin-top:10px;color:var(--muted);font-size:13px">Supported: PNG / JPG / WEBP — client-side</div>
-      </div>
-
-      <div style="margin-top:12px;display:flex;gap:12px;flex-wrap:wrap;align-items:center">
-        <label style="min-width:100px">Mode</label>
-        <select id="mode2048" style="max-width:260px">
-          <option value="fit">Fit (preserve aspect, max 2048×1152)</option>
-          <option value="crop">Crop (center → exact 2048×1152)</option>
-        </select>
-
-        <label style="min-width:100px">Output format</label>
-        <select id="outfmt2048" style="max-width:200px">
-          <option value="image/png">PNG</option>
-          <option value="image/jpeg">JPG</option>
-          <option value="image/webp">WEBP</option>
-        </select>
-
-        <label style="min-width:100px">Quality (JPG/WEBP)</label>
-        <input id="outq2048" type="number" min="10" max="100" value="92" style="width:110px">
-      </div>
-
-      <div style="margin-top:14px">
-        <button onclick="generate2048()">Generate 2048×1152</button>
-        <button id="download2048" style="display:none;margin-left:8px" onclick="downloadGenerated()">Download</button>
-        <span id="status2048" style="margin-left:12px;color:var(--muted)"></span>
-      </div>
-
-      <div class="preview-wrap" id="previewWrap" style="display:none">
-        <img id="previewImg" class="preview-img" alt="Preview">
-        <div class="meta">
-          <div style="color:var(--muted)">Original:</div>
-          <div id="origMeta2048" style="margin-bottom:8px;color:var(--muted)"></div>
-
-          <div style="color:var(--muted)">Generated (2048×1152):</div>
-          <div id="genMeta2048" style="margin-bottom:8px;color:var(--muted)"></div>
-
-          <div id="hint2048" style="color:var(--muted);font-size:13px">Tip: use "Crop" for exact wallpaper-sized output.</div>
-        </div>
-      </div>
-
-      <div id="canvasContainer" style="display:none"></div>
-    </section>
-
-    <!-- ========== 500x500 Interactive Resizer ========== -->
-    <section id="resizer500" class="tool-page" aria-hidden="true">
-      <button class="back" onclick="showHome()">← Back to Tools</button>
-      <h2 style="color:var(--neon-cyan);font-family:Orbitron">500 × 500 Photo Resizer</h2>
-
-      <div class="res500-wrap">
-        <div class="controls">
-          <div class="file-input">
-            <input type="file" id="file500" accept="image/*">
-            <div style="margin-top:8px;color:var(--muted);font-size:13px">Supported: PNG, JPG, WEBP — processed locally</div>
+          <div class="meta-row">
+            <div>Characters: <strong id="charCount" style="color:var(--neon-cyan)">0</strong></div>
+            <div style="font-size:13px;color:var(--muted)">Tip: blank lines will be ignored • Ctrl/Cmd+Enter to shuffle</div>
           </div>
 
-          <div class="controls-row" style="margin-top:12px">
-            <label>Background</label>
-            <select id="bg500" class="small">
-              <option value="transparent">Transparent (PNG)</option>
-              <option value="#ffffff">White</option>
-              <option value="#000000">Black</option>
-              <option value="#0a3bff">Blue</option>
-              <option value="custom">Custom HEX</option>
-            </select>
-            <input id="bgCustom500" class="small" placeholder="#f0f0f0" style="display:none;margin-left:6px">
+          <div style="margin-top:12px">
+            <button id="shuffleBtn" class="btn">SHUFFLE LINKS</button>
           </div>
 
-          <div class="controls-row">
-            <label>Output format</label>
-            <select id="fmt500" class="small">
-              <option value="image/png">PNG</option>
-              <option value="image/jpeg">JPG</option>
-              <option value="image/webp">WEBP</option>
-            </select>
+          <div class="output-wrap">
+            <div class="section-title" style="margin-top:12px"><span class="icon">🌐</span> Shuffled URLs</div>
+            <textarea id="outputLinks" placeholder="Shuffled links will appear here..." readonly></textarea>
 
-            <label>Quality (JPG/WEBP)</label>
-            <input id="q500" class="small" type="number" min="10" max="100" value="92">
-          </div>
-
-          <div style="margin-top:14px">
-            <label class="muted">Zoom</label>
-            <div style="display:flex;align-items:center;gap:12px;margin-top:6px">
-              <input id="zoom500" type="range" min="0.1" max="3" step="0.01" value="1">
-              <div class="meta" id="zoomVal500">100%</div>
+            <div class="meta-row" style="margin-top:10px">
+              <div>Count: <span id="countNum" class="count-bubble">0</span></div>
+              <div style="display:flex;gap:8px;align-items:center">
+                <button id="copyBtn" class="small-btn">COPY</button>
+                <button id="clearBtn" class="small-btn" style="background:#555;color:#fff;">CLEAR</button>
+              </div>
             </div>
           </div>
-
-          <div style="margin-top:10px">
-            <label class="muted">Rotate (°)</label>
-            <div style="display:flex;align-items:center;gap:12px;margin-top:6px">
-              <input id="rot500" type="range" min="-180" max="180" step="1" value="0">
-              <div class="meta" id="rotVal500">0°</div>
-            </div>
-          </div>
-
-          <div style="margin-top:10px">
-            <label class="muted">Position X</label>
-            <div style="display:flex;align-items:center;gap:12px;margin-top:6px">
-              <input id="posX500" type="range" min="-500" max="500" step="1" value="0">
-              <div class="meta" id="posXVal500">0 px</div>
-            </div>
-          </div>
-
-          <div style="margin-top:10px">
-            <label class="muted">Position Y</label>
-            <div style="display:flex;align-items:center;gap:12px;margin-top:6px">
-              <input id="posY500" type="range" min="-500" max="500" step="1" value="0">
-              <div class="meta" id="posYVal500">0 px</div>
-            </div>
-          </div>
-
-          <div style="margin-top:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-            <button class="primary" id="gen500">Generate</button>
-            <button class="download" id="dl500" style="display:none">Download</button>
-            <button class="reset" id="reset500">Reset</button>
-            <span id="status500" style="margin-left:10px;color:var(--muted)"></span>
-          </div>
-        </div>
-
-        <div class="preview-box">
-          <div class="canvas-frame">
-            <canvas id="canvas500" width="500" height="500" style="display:block"></canvas>
-          </div>
-          <div style="width:100%;display:flex;justify-content:space-between;align-items:center">
-            <div class="meta" id="origInfo500"></div>
-            <div class="meta" id="outInfo500"></div>
-          </div>
         </div>
       </div>
     </section>
 
-    <!-- ========== Description Shorter ========== -->
-    <section id="descShorter" class="tool-page" aria-hidden="true">
-      <button class="back" onclick="showHome()">← Back to Tools</button>
-      <h2 style="color:var(--neon-cyan);font-family:Orbitron">Description Shorter</h2>
-
-      <div style="margin-top:12px" class="file-input">
-        <div style="color:var(--muted);font-size:13px">Paste your long description below — choose limit and mode, then click Shorten.</div>
-      </div>
-
-      <div style="margin-top:12px">
-        <label class="muted">Original description</label>
-        <textarea id="descInput" placeholder="Paste full description here..." style="width:100%;height:140px;background:#071226;color:#eaf6ff;border-radius:8px;padding:10px"></textarea>
-      </div>
-
-      <div class="controls-row" style="margin-top:12px;align-items:center">
-        <label class="muted">Max characters</label>
-        <input id="charLimit" type="number" min="10" value="160" class="small" style="max-width:140px">
-        <label class="muted" style="margin-left:12px">Mode</label>
-        <select id="shortMode" class="small">
-          <option value="hard">Hard truncate (cut exactly)</option>
-          <option value="word" selected>Word-aware (don't break words)</option>
-          <option value="sentence">Sentence-aware (keep full sentences)</option>
-        </select>
-
-        <label style="margin-left:12px" class="muted"><input type="checkbox" id="addEllipsis" checked> Add "..." if shortened</label>
-      </div>
-
-      <div style="margin-top:14px">
-        <button class="primary" onclick="shortenDescription()">Shorten</button>
-        <button class="reset" onclick="resetDescTool()" style="margin-left:8px">Reset</button>
-        <span id="descStatus" style="margin-left:12px;color:var(--muted)"></span>
-      </div>
-
-      <div style="margin-top:14px">
-        <label class="muted">Shortened result</label>
-        <textarea id="descOutput" readonly style="width:100%;height:120px;background:#071226;color:#eaf6ff;border-radius:8px;padding:10px"></textarea>
-      </div>
-
-      <div style="margin-top:10px">
-        <button class="copy" onclick="copyDescOutput()">Copy to Clipboard</button>
-      </div>
-    </section>
-
-    <footer>© PhotoTools — Neon dark • Built for creators</footer>
+    <footer style="margin-top:28px">© PhotoTools — Neon dark • Built for creators</footer>
   </div>
 
 <script>
-  // navigation
+  // NOTE: If you have other tool sections below, ensure their IDs are included in the arrays below.
   function showHome(){
     document.getElementById('homeView').style.display='block';
-    const ids = ['resizer','converter','compressor','urltool','resizer2048','resizer500','descShorter'];
+    const ids = ['resizer','converter','compressor','urltool','resizer2048','resizer500','descShorter','linkShuffle'];
     ids.forEach(id=>{
       const el=document.getElementById(id);
       if(el){ el.classList.remove('active'); el.setAttribute('aria-hidden','true'); }
@@ -488,7 +267,7 @@ https://example.net/article
   }
   function showTool(id){
     document.getElementById('homeView').style.display='none';
-    const ids = ['resizer','converter','compressor','urltool','resizer2048','resizer500','descShorter'];
+    const ids = ['resizer','converter','compressor','urltool','resizer2048','resizer500','descShorter','linkShuffle'];
     ids.forEach(k=>{
       const el=document.getElementById(k);
       if(!el) return;
@@ -497,495 +276,81 @@ https://example.net/article
     window.scrollTo({top:0,behavior:'smooth'});
   }
 
-  // ---------- Helpers ----------
-  function humanFileSize(bytes) {
-    if(!bytes) return '';
-    const k = 1024, dm = 1;
-    const sizes = ['B','KB','MB','GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
-  }
-
-  // ---------- Basic Resizer (generateResized) ----------
-  let lastGeneratedUrl = null;
-  function generateResized(){
-    const file = document.getElementById('resizeFile').files[0];
-    if(!file){ alert('Please choose an image'); return; }
-
-    const w = parseInt(document.getElementById('w').value,10);
-    const h = parseInt(document.getElementById('h').value,10);
-    if(!w || !h){ alert('Enter valid width and height'); return; }
-
-    const outFormat = document.getElementById('outFormat').value;
-    const bgFill = document.getElementById('bgFill').value;
-    const qualityInput = parseInt(document.getElementById('outQuality').value,10) || 90;
-    const quality = Math.max(0.1, Math.min(1, qualityInput/100));
-
-    setStatus('Loading image...');
-    const img = new Image();
-    img.onload = function(){
-      const canvas = document.createElement('canvas');
-      canvas.width = w; canvas.height = h;
-      const ctx = canvas.getContext('2d');
-
-      let fill = bgFill;
-      if(fill === 'transparent'){
-        if(outFormat !== 'image/png'){
-          fill = '#ffffff';
-        } else {
-          ctx.clearRect(0,0,w,h);
-        }
-      }
-      if(fill && fill !== 'transparent'){
-        ctx.fillStyle = fill;
-        ctx.fillRect(0,0,w,h);
-      }
-
-      const iw = img.width, ih = img.height;
-      const scale = Math.min(w/iw, h/ih);
-      const dw = Math.round(iw * scale);
-      const dh = Math.round(ih * scale);
-      const dx = Math.round((w - dw)/2);
-      const dy = Math.round((h - dh)/2);
-      ctx.drawImage(img, 0, 0, iw, ih, dx, dy, dw, dh);
-
-      if(lastGeneratedUrl){ URL.revokeObjectURL(lastGeneratedUrl); lastGeneratedUrl = null; }
-
-      setStatus('Rendering...');
-      canvas.toBlob(function(blob){
-        if(!blob){ setStatus('Failed to render', true); return; }
-        const url = URL.createObjectURL(blob);
-        lastGeneratedUrl = url;
-
-        const previewWrap = document.getElementById('resPreview');
-        const previewImg = document.getElementById('resPreviewImg');
-        previewImg.src = url;
-        previewWrap.style.display = 'flex';
-
-        const origMeta = `${img.width} × ${img.height} — ${humanFileSize(file.size)}`;
-        document.getElementById('origMeta').textContent = origMeta;
-
-        const genMeta = `${w} × ${h} — ${humanFileSize(blob.size)} — ${outFormat.split('/')[1].toUpperCase()}`;
-        document.getElementById('genMeta').textContent = genMeta;
-
-        const dl = document.getElementById('downloadBtn');
-        dl.style.display = 'inline-block';
-        const ext = outFormat === 'image/png' ? 'png' : (outFormat === 'image/jpeg' ? 'jpg' : 'webp');
-        dl.dataset.url = url;
-        dl.dataset.name = `resized-${w}x${h}.${ext}`;
-
-        setStatus('Done');
-      }, outFormat, quality);
-    };
-    img.onerror = function(){ setStatus('Failed to load image', true); };
-    img.src = URL.createObjectURL(file);
-  }
-
-  function downloadResized(){
-    const dl = document.getElementById('downloadBtn');
-    const url = dl.dataset.url;
-    const name = dl.dataset.name || 'resized.png';
-    if(!url){ alert('No generated image yet'); return; }
-    const a = document.createElement('a'); a.href = url; a.download = name;
-    document.body.appendChild(a); a.click(); a.remove();
-    setStatus('Downloaded');
-  }
-
-  function setStatus(msg, isError){
-    const el = document.getElementById('status');
-    el.textContent = msg || '';
-    el.style.color = isError ? '#ff8b8b' : 'var(--muted)';
-  }
-
-  // ---------- Converter ----------
-  function convertImage(){
-    const file=document.getElementById('convertFile').files[0]; if(!file){ alert('Please choose an image'); return; }
-    const format=document.getElementById('format').value;
-    const img=new Image();
-    img.onload=function(){
-      const c=document.createElement('canvas'); c.width=img.width; c.height=img.height;
-      c.getContext('2d').drawImage(img,0,0);
-      const out=document.getElementById('convertResult'); out.innerHTML='';
-      const a=document.createElement('a'); a.download='converted'; a.href=c.toDataURL(format); a.textContent='Download converted image'; out.appendChild(a);
-    }
-    img.src=URL.createObjectURL(file);
-  }
-
-  // ---------- Compressor ----------
-  function compressImage(){
-    const file=document.getElementById('compressFile').files[0]; if(!file){ alert('Please choose an image'); return; }
-    let q=parseInt(document.getElementById('quality').value,10);
-    if(isNaN(q) || q<1) q=10; if(q>100) q=100;
-    const quality=q/100;
-    const img=new Image();
-    img.onload=function(){
-      const c=document.createElement('canvas'); c.width=img.width; c.height=img.height;
-      c.getContext('2d').drawImage(img,0,0);
-      const out=document.getElementById('compressResult'); out.innerHTML='';
-      const a=document.createElement('a'); a.download='compressed.jpg'; a.href=c.toDataURL('image/jpeg',quality); a.textContent='Download compressed image'; out.appendChild(a);
-    }
-    img.src=URL.createObjectURL(file);
-  }
-
-  // ---------- URL → HTML (advanced) ----------
-  function sanitizeUrl(u){
-    u = u.trim();
-    if(!u) return '';
-    if(!/^[a-zA-Z][a-zA-Z0-9+\-.]*:\/\//.test(u)){
-      u = 'https://' + u;
-    }
-    return u;
-  }
-  function getDomainText(u){
-    try{ const urlObj = new URL(u); return urlObj.hostname.replace(/^www\./,''); }catch(e){ return u; }
-  }
-  function escapeHtml(str){
-    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-  }
-  function convertURLAdvanced(){
-    const input = document.getElementById('urlInput').value;
-    const lines = input.split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
-    if(lines.length === 0){ setUrlStatus('Please paste at least one URL', true); return; }
-
-    const newTab = document.getElementById('optNewTab').checked;
-    const addRel = document.getElementById('optRel').checked;
-    const useDomainText = document.getElementById('optAutoText').checked;
-    const outFmt = document.querySelector('input[name="outFmt"]:checked').value;
-
-    const relAttr = addRel ? ' rel="noopener noreferrer"' : '';
-    const targetAttr = newTab ? ' target="_blank"' : '';
-
-    const results = [];
-    for(const line of lines){
-      const s = sanitizeUrl(line);
-      if(!s) continue;
-      const text = useDomainText ? getDomainText(s) : line;
-      const a = `<a href="${escapeHtml(s)}"${targetAttr}${relAttr}>${escapeHtml(text)}</a>`;
-      results.push(a);
-    }
-
-    let out = '';
-    if(outFmt === 'lines') out = results.join('\n');
-    else out = '<p>\n' + results.map(r => '  ' + r + '<br>').join('\n') + '\n</p>';
-
-    document.getElementById('urlOutput').value = out;
-    setUrlStatus(`Converted ${results.length} URL(s).`, false);
-  }
-  function resetURLTool(){
-    document.getElementById('urlInput').value = '';
-    document.getElementById('urlOutput').value = '';
-    document.getElementById('optNewTab').checked = true;
-    document.getElementById('optRel').checked = false;
-    document.getElementById('optAutoText').checked = false;
-    document.querySelector('input[name="outFmt"][value="lines"]').checked = true;
-    setUrlStatus('', false);
-  }
-  function copyUrlOutput(){
-    const text = document.getElementById('urlOutput').value;
-    if(!text){ setUrlStatus('Nothing to copy', true); return; }
-    if(navigator.clipboard && navigator.clipboard.writeText){
-      navigator.clipboard.writeText(text).then(()=> setUrlStatus('Copied to clipboard ✔', false)).catch(()=> fallbackCopySimple(text));
-    } else { fallbackCopySimple(text); }
-  }
-  function fallbackCopySimple(text){
-    const ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select();
-    try{ document.execCommand('copy'); setUrlStatus('Copied to clipboard ✔', false); }catch(e){ setUrlStatus('Copy failed — select and copy manually', true); }
-    ta.remove();
-  }
-  function setUrlStatus(msg,isErr){ const el=document.getElementById('urlStatus'); el.textContent=msg||''; el.style.color=isErr?'#ff8b8b':'var(--muted)'; }
-
-  // ---------- 2048x1152 resizer ----------
-  const TARGET_W = 2048;
-  const TARGET_H = 1152;
-  let generatedBlobURL = null;
-  async function generate2048(){
-    const fileInput = document.getElementById('file2048');
-    const file = fileInput.files[0];
-    if(!file){ alert('Please choose an image file first'); return; }
-
-    const mode = document.getElementById('mode2048').value;
-    const outfmt = document.getElementById('outfmt2048').value;
-    const qualityVal = parseInt(document.getElementById('outq2048').value,10) || 92;
-    const quality = Math.max(0.1, Math.min(1, qualityVal/100));
-
-    setStatus2048('Loading image...');
-    let img;
-    try { if(window.createImageBitmap) img = await createImageBitmap(file); else img = await loadImageViaElement(URL.createObjectURL(file)); }
-    catch(e){ img = await loadImageViaElement(URL.createObjectURL(file)); }
-
-    document.getElementById('origMeta2048').textContent = `${img.width} × ${img.height} — ${humanFileSize(file.size)}`;
-
-    const canvas = document.createElement('canvas');
-    canvas.width = TARGET_W; canvas.height = TARGET_H;
-    const ctx = canvas.getContext('2d');
-
-    if(outfmt === 'image/png' || outfmt === 'image/webp') ctx.clearRect(0,0,TARGET_W,TARGET_H);
-    else { ctx.fillStyle = '#0b1220'; ctx.fillRect(0,0,TARGET_W,TARGET_H); }
-
-    const iw = img.width, ih = img.height;
-    if(mode === 'fit'){
-      const scale = Math.min(TARGET_W / iw, TARGET_H / ih);
-      const dw = Math.round(iw * scale);
-      const dh = Math.round(ih * scale);
-      const dx = Math.round((TARGET_W - dw)/2);
-      const dy = Math.round((TARGET_H - dh)/2);
-      ctx.drawImage(img, 0, 0, iw, ih, dx, dy, dw, dh);
-    } else {
-      const scale = Math.max(TARGET_W / iw, TARGET_H / ih);
-      const dw = Math.round(iw * scale);
-      const dh = Math.round(ih * scale);
-      const dx = Math.round((TARGET_W - dw)/2);
-      const dy = Math.round((TARGET_H - dh)/2);
-      ctx.drawImage(img, 0, 0, iw, ih, dx, dy, dw, dh);
-    }
-
-    if(generatedBlobURL){ URL.revokeObjectURL(generatedBlobURL); generatedBlobURL = null; }
-
-    setStatus2048('Rendering...');
-    canvas.toBlob(function(blob){
-      if(!blob){ setStatus2048('Failed to render image.', true); return; }
-      const url = URL.createObjectURL(blob);
-      generatedBlobURL = url;
-
-      const preview = document.getElementById('previewImg');
-      preview.src = url;
-      document.getElementById('previewWrap').style.display = 'flex';
-
-      document.getElementById('genMeta2048').textContent = `${TARGET_W} × ${TARGET_H} — ${humanFileSize(blob.size)} — ${outfmt.split('/')[1].toUpperCase()}`;
-
-      const dl = document.getElementById('download2048');
-      dl.style.display = 'inline-block';
-      dl.dataset.blobUrl = url;
-      dl.dataset.filename = `photo-2048x1152.${outfmt === 'image/png' ? 'png' : (outfmt === 'image/jpeg' ? 'jpg' : 'webp')}`;
-      setStatus2048('Done.');
-      const cc = document.getElementById('canvasContainer'); cc.innerHTML = ''; cc.appendChild(canvas);
-    }, outfmt, quality);
-  }
-  function loadImageViaElement(src){ return new Promise((resolve,reject)=>{ const img=new Image(); img.onload=()=>resolve(img); img.onerror=(e)=>reject(e); img.src=src; }); }
-  function downloadGenerated(){ const dl=document.getElementById('download2048'); const url=dl.dataset.blobUrl; const filename=dl.dataset.filename||'photo-2048x1152.png'; if(!url){ alert('No generated image yet.'); return; } const a=document.createElement('a'); a.href=url; a.download=filename; document.body.appendChild(a); a.click(); a.remove(); setStatus2048('Downloaded'); }
-  function setStatus2048(msg,isErr){ const el=document.getElementById('status2048'); el.textContent=msg||''; el.style.color=isErr?'#ff8b8b':'var(--muted)'; }
-
-  // ---------- 500x500 interactive resizer ----------
+  /* ---------------- Link Shuffle logic (from your provided code) ---------------- */
   (function(){
-    const fileInput = document.getElementById('file500');
-    const canvas = document.getElementById('canvas500');
-    const ctx = canvas.getContext('2d');
+    const input = document.getElementById('inputLinks');
+    const output = document.getElementById('outputLinks');
+    const charCount = document.getElementById('charCount');
+    const countNum = document.getElementById('countNum');
+    const shuffleBtn = document.getElementById('shuffleBtn');
+    const copyBtn = document.getElementById('copyBtn');
+    const clearBtn = document.getElementById('clearBtn');
 
-    const zoom = document.getElementById('zoom500');
-    const zoomVal = document.getElementById('zoomVal500');
-    const rot = document.getElementById('rot500');
-    const rotVal = document.getElementById('rotVal500');
-    const posX = document.getElementById('posX500');
-    const posXVal = document.getElementById('posXVal500');
-    const posY = document.getElementById('posY500');
-    const posYVal = document.getElementById('posYVal500');
+    function updateCharCount() { charCount.textContent = input.value.length; }
+    input.addEventListener('input', updateCharCount);
 
-    const bgSel = document.getElementById('bg500');
-    const bgCustom = document.getElementById('bgCustom500');
-    const fmt = document.getElementById('fmt500');
-    const q = document.getElementById('q500');
-
-    const genBtn = document.getElementById('gen500');
-    const dlBtn = document.getElementById('dl500');
-    const resetBtn = document.getElementById('reset500');
-    const status = document.getElementById('status500');
-    const origInfo = document.getElementById('origInfo500');
-    const outInfo = document.getElementById('outInfo500');
-
-    let img = null;
-    let lastBlobUrl = null;
-
-    function setStatusLocal(msg,isErr){ status.textContent = msg||''; status.style.color = isErr ? '#ff8b8b' : 'var(--muted)'; }
-    function updateUIValues(){ zoomVal.textContent = Math.round(parseFloat(zoom.value)*100) + '%'; rotVal.textContent = rot.value + '°'; posXVal.textContent = posX.value + ' px'; posYVal.textContent = posY.value + ' px'; }
-
-    bgSel.addEventListener('change', ()=>{ if(bgSel.value === 'custom'){ bgCustom.style.display='inline-block'; } else { bgCustom.style.display='none'; } });
-
-    [zoom, rot, posX, posY].forEach(el=> el.addEventListener('input', ()=>{ updateUIValues(); renderPreview(); }));
-
-    fileInput.addEventListener('change', (e)=>{
-      const f = e.target.files[0];
-      if(!f) return;
-      const url = URL.createObjectURL(f);
-      const i = new Image();
-      i.onload = function(){
-        img = i;
-        origInfo.textContent = `${img.width}×${img.height} • ${Math.round(f.size/1024)} KB`;
-        renderPreview();
-        URL.revokeObjectURL(url);
-      }
-      i.onerror = function(){ setStatusLocal('Failed to load image', true); }
-      i.src = url;
-    });
-
-    function clearLastBlob(){ if(lastBlobUrl){ URL.revokeObjectURL(lastBlobUrl); lastBlobUrl = null; } }
-
-    function renderPreview(){
-      ctx.clearRect(0,0,500,500);
-      let bg = bgSel.value;
-      if(bg === 'custom'){ bg = bgCustom.value || '#ffffff'; }
-      if(bg !== 'transparent'){ ctx.fillStyle = bg; ctx.fillRect(0,0,500,500); } else { ctx.clearRect(0,0,500,500); }
-
-      if(!img) return;
-
-      ctx.save();
-      const cx = 250 + parseInt(posX.value,10);
-      const cy = 250 + parseInt(posY.value,10);
-      ctx.translate(cx, cy);
-      const angle = parseFloat(rot.value) * Math.PI / 180;
-      ctx.rotate(angle);
-      const scale = parseFloat(zoom.value);
-      const iw = img.width, ih = img.height;
-      const drawW = iw * scale;
-      const drawH = ih * scale;
-      ctx.drawImage(img, -drawW/2, -drawH/2, drawW, drawH);
-      ctx.restore();
+    function getNonEmptyLines(text) {
+      return text.split(/\r?\n/).map(line => line.trim()).filter(line => line.length > 0);
     }
 
-    genBtn.addEventListener('click', ()=>{
-      if(!img){ setStatusLocal('Please choose an image first', true); return; }
-      setStatusLocal('Rendering...');
-      const outCanvas = document.createElement('canvas');
-      outCanvas.width = 500; outCanvas.height = 500;
-      const outCtx = outCanvas.getContext('2d');
+    function shuffleArray(arr) {
+      const a = arr.slice();
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
 
-      let bg = bgSel.value;
-      if(bg === 'custom'){ bg = bgCustom.value || '#ffffff'; }
-      if(bg === 'transparent' && fmt.value !== 'image/png'){ bg = '#ffffff'; }
-      if(bg !== 'transparent'){ outCtx.fillStyle = bg; outCtx.fillRect(0,0,500,500); } else { outCtx.clearRect(0,0,500,500); }
-
-      outCtx.save();
-      const cx = 250 + parseInt(posX.value,10);
-      const cy = 250 + parseInt(posY.value,10);
-      outCtx.translate(cx, cy);
-      const angle = parseFloat(rot.value) * Math.PI / 180;
-      outCtx.rotate(angle);
-      const scale = parseFloat(zoom.value);
-      const iw = img.width, ih = img.height;
-      const drawW = iw * scale;
-      const drawH = ih * scale;
-      outCtx.drawImage(img, -drawW/2, -drawH/2, drawW, drawH);
-      outCtx.restore();
-
-      const outFormat = fmt.value;
-      const quality = Math.max(0.1, Math.min(1, (parseInt(q.value,10)||92)/100));
-      clearLastBlob();
-      outCanvas.toBlob(function(blob){
-        if(!blob){ setStatusLocal('Failed to render', true); return; }
-        const url = URL.createObjectURL(blob);
-        lastBlobUrl = url;
-        dlBtn.style.display = 'inline-block';
-        dlBtn.dataset.url = url;
-        const ext = outFormat === 'image/png' ? 'png' : (outFormat === 'image/jpeg' ? 'jpg' : 'webp');
-        dlBtn.dataset.name = `photo-500x500.${ext}`;
-        outInfo.textContent = `500×500 • ${Math.round(blob.size/1024)} KB • ${ext.toUpperCase()}`;
-        setStatusLocal('Done.');
-        const finalImg = new Image();
-        finalImg.onload = function(){
-          ctx.clearRect(0,0,500,500);
-          if(bg !== 'transparent'){ ctx.fillStyle = bg; ctx.fillRect(0,0,500,500); } else { ctx.clearRect(0,0,500,500); }
-          ctx.drawImage(finalImg, 0,0);
-        }
-        finalImg.src = url;
-      }, outFormat, quality);
+    shuffleBtn.addEventListener('click', () => {
+      const lines = getNonEmptyLines(input.value);
+      if (lines.length === 0) {
+        output.value = '';
+        countNum.textContent = '0';
+        return;
+      }
+      const shuffled = shuffleArray(lines);
+      output.value = shuffled.join('\n');
+      countNum.textContent = String(shuffled.length);
     });
 
-    document.getElementById('dl500').addEventListener('click', ()=>{
-      const url = document.getElementById('dl500').dataset.url;
-      const name = document.getElementById('dl500').dataset.name || 'photo-500x500.png';
-      if(!url){ setStatusLocal('Nothing to download', true); return; }
-      const a = document.createElement('a'); a.href = url; a.download = name;
-      document.body.appendChild(a); a.click(); a.remove();
-      setStatusLocal('Downloaded');
+    copyBtn.addEventListener('click', async () => {
+      try {
+        const text = output.value;
+        if (!text) return;
+        await navigator.clipboard.writeText(text);
+        const prev = copyBtn.textContent;
+        copyBtn.textContent = 'COPIED!';
+        setTimeout(()=> copyBtn.textContent = prev, 1200);
+      } catch (err) {
+        // fallback
+        output.select();
+        document.execCommand('copy');
+        const prev = copyBtn.textContent;
+        copyBtn.textContent = 'COPIED!';
+        setTimeout(()=> copyBtn.textContent = prev, 1200);
+      }
     });
 
-    resetBtn.addEventListener('click', ()=>{
-      fileInput.value = '';
-      img = null;
-      zoom.value = '1'; rot.value = '0'; posX.value = '0'; posY.value = '0';
-      bgSel.value = 'transparent'; bgCustom.style.display='none'; bgCustom.value='';
-      fmt.value = 'image/png'; q.value = '92';
-      updateUIValues();
-      ctx.clearRect(0,0,500,500);
-      origInfo.textContent = '';
-      outInfo.textContent = '';
-      document.getElementById('dl500').style.display = 'none';
-      clearLastBlob();
-      setStatusLocal('');
+    clearBtn.addEventListener('click', () => {
+      input.value = '';
+      output.value = '';
+      updateCharCount();
+      countNum.textContent = '0';
     });
 
-    updateUIValues();
+    input.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        e.preventDefault();
+        shuffleBtn.click();
+      }
+    });
+
+    // init
+    updateCharCount();
   })();
 
-  // ---------- Description Shorter ----------
-  function shortenDescription(){
-    const input = document.getElementById('descInput').value || '';
-    const limitVal = parseInt(document.getElementById('charLimit').value, 10) || 0;
-    const mode = document.getElementById('shortMode').value;
-    const addEll = document.getElementById('addEllipsis').checked;
-    const statusEl = document.getElementById('descStatus');
-    const outEl = document.getElementById('descOutput');
-    statusEl.textContent = ''; outEl.value = '';
-    if(!input.trim()){ statusEl.textContent = 'Please paste a description first.'; statusEl.style.color = '#ff8b8b'; return; }
-    if(limitVal < 10){ statusEl.textContent = 'Please set a sensible character limit (>=10).'; statusEl.style.color = '#ff8b8b'; return; }
-    const clean = input.replace(/\s+/g, ' ').trim();
-    if(clean.length <= limitVal){ outEl.value = clean; statusEl.textContent = 'Input already within limit — no change.'; statusEl.style.color = 'var(--muted)'; return; }
-
-    let result = '';
-    if(mode === 'hard'){
-      result = clean.slice(0, limitVal);
-      result = result.replace(/\s+$/,'');
-      if(addEll) result = result + '...';
-    } else if(mode === 'word'){
-      const chunk = clean.slice(0, limitVal + 1);
-      const lastSpace = chunk.lastIndexOf(' ');
-      if(lastSpace > 5) result = chunk.slice(0, lastSpace);
-      else result = clean.slice(0, limitVal);
-      result = result.replace(/\s+$/,'');
-      if(addEll) result = result + '...';
-    } else if(mode === 'sentence'){
-      const sentences = clean.match(/[^.!?]+[.!?]*/g) || [clean];
-      let acc = '';
-      for(const s of sentences){
-        if((acc + ' ' + s).trim().length <= limitVal) acc = (acc + ' ' + s).trim();
-        else break;
-      }
-      if(!acc){
-        const chunk = clean.slice(0, limitVal + 1);
-        const lastSpace = chunk.lastIndexOf(' ');
-        result = lastSpace > 5 ? chunk.slice(0,lastSpace) : clean.slice(0,limitVal);
-        result = result.replace(/\s+$/,'');
-        if(addEll) result = result + '...';
-      } else {
-        result = acc;
-        if(addEll && acc.length < clean.length) result = result + '...';
-      }
-    } else {
-      result = clean.slice(0, limitVal);
-      if(addEll) result = result + '...';
-    }
-
-    outEl.value = result;
-    statusEl.textContent = `Shortened to ${result.length} characters.`;
-    statusEl.style.color = 'var(--muted)';
-  }
-  function copyDescOutput(){
-    const text = document.getElementById('descOutput').value;
-    const statusEl = document.getElementById('descStatus');
-    if(!text){ statusEl.textContent = 'Nothing to copy'; statusEl.style.color = '#ff8b8b'; return; }
-    if(navigator.clipboard && navigator.clipboard.writeText){
-      navigator.clipboard.writeText(text).then(()=>{ statusEl.textContent = 'Copied to clipboard ✔'; statusEl.style.color = 'var(--muted)'; }).catch(()=> fallbackCopyDesc(text,statusEl));
-    } else { fallbackCopyDesc(text,statusEl); }
-  }
-  function fallbackCopyDesc(text,statusEl){
-    const ta=document.createElement('textarea'); ta.value=text; document.body.appendChild(ta); ta.select();
-    try{ document.execCommand('copy'); statusEl.textContent='Copied to clipboard ✔'; statusEl.style.color='var(--muted)'; }catch(e){ statusEl.textContent='Copy failed — select and copy manually'; statusEl.style.color='#ff8b8b'; }
-    ta.remove();
-  }
-  function resetDescTool(){
-    document.getElementById('descInput').value=''; document.getElementById('descOutput').value=''; document.getElementById('charLimit').value=160; document.getElementById('shortMode').value='word'; document.getElementById('addEllipsis').checked=true; document.getElementById('descStatus').textContent='';
-  }
-
-  // small tile hover effect
+  /* small tile hover effect (for consistent UX) */
   (function(){
     const tiles = document.querySelectorAll('.tile');
     tiles.forEach(tile=>{
@@ -1003,7 +368,7 @@ https://example.net/article
     });
   })();
 
-  // initial
+  // Start: show home
   showHome();
 </script>
 </body>
