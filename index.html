@@ -292,22 +292,22 @@
 
       <h2 style="color:var(--neon-cyan);font-family:Orbitron">Tools</h2>
       <div class="home">
-        <!-- Order changed as requested -->
-        <div class="tile" onclick="showTool('urltool')"><div style="font-size:26px">🔗</div><h3>URL → HTML</h3><p>Paste URLs to generate anchor tags</p></div>
+        <!-- Order & names updated as requested -->
+        <div class="tile" onclick="showTool('urltool')"><div style="font-size:26px">🔗</div><h3>URL to HTML Converter</h3><p>Paste URLs to generate anchor tags</p></div>
         <div class="tile" onclick="showTool('linkShuffle')"><div style="font-size:26px">🔀</div><h3>Link Shuffle</h3><p>Shuffle & copy your URL list</p></div>
         <div class="tile" onclick="showTool('descShorter')"><div style="font-size:26px">✂️</div><h3>Description Shorter</h3><p>Shorten text to N characters</p></div>
-        <div class="tile" onclick="showTool('resizer500')"><div style="font-size:26px">🖼️</div><h3>500 × 500 Resizer</h3><p>Interactive photo resize & position</p></div>
-        <div class="tile" onclick="showTool('resizer2048')"><div style="font-size:26px">🖼️</div><h3>2048 × 1152 Resizer</h3><p>Resize / fit / crop photos to 2048×1152</p></div>
-        <div class="tile" onclick="showTool('resizer')"><div style="font-size:26px">⚙️</div><h3>Resizer</h3><p>Resize images to any px / in / cm</p></div>
-        <div class="tile" onclick="showTool('converter')"><div style="font-size:26px">🔁</div><h3>Converter</h3><p>PNG ⇆ JPG ⇆ WEBP</p></div>
-        <div class="tile" onclick="showTool('compressor')"><div style="font-size:26px">⚡</div><h3>Compressor</h3><p>Compress images with quality control</p></div>
+        <div class="tile" onclick="showTool('resizer500')"><div style="font-size:26px">🖼️</div><h3>500 × 500 Logo Maker</h3><p>Interactive photo resize & position</p></div>
+        <div class="tile" onclick="showTool('resizer2048')"><div style="font-size:26px">🖼️</div><h3>2048 × 1152 Cover Maker</h3><p>Resize / fit / crop photos to 2048×1152</p></div>
+        <div class="tile" onclick="showTool('resizer')"><div style="font-size:26px">⚙️</div><h3>Image Resizer Pro</h3><p>Resize images to any px / in / cm</p></div>
+        <div class="tile" onclick="showTool('converter')"><div style="font-size:26px">🔁</div><h3>ImgConvert</h3><p>PNG ⇆ JPG ⇆ WEBP</p></div>
+        <div class="tile" onclick="showTool('compressor')"><div style="font-size:26px">⚡</div><h3>ImgCompressor</h3><p>Compress images with quality control</p></div>
       </div>
     </main>
 
     <!-- RESIZER (basic) -->
     <section id="resizer" class="tool-page" aria-hidden="true">
       <button class="back" onclick="showHome()">← Back to Tools</button>
-      <h2 style="color:var(--neon-cyan);font-family:Orbitron">Image Resizer</h2>
+      <h2 style="color:var(--neon-cyan);font-family:Orbitron">Image Resizer Pro</h2>
       <div class="file-input"><input type="file" id="resizeFile" accept="image/*"></div>
       <label>Width (px)</label><input type="number" id="w" placeholder="e.g. 800" value="500">
       <label>Height (px)</label><input type="number" id="h" placeholder="e.g. 500" value="500">
@@ -352,7 +352,7 @@
     <!-- CONVERTER -->
     <section id="converter" class="tool-page" aria-hidden="true">
       <button class="back" onclick="showHome()">← Back to Tools</button>
-      <h2 style="color:var(--neon-cyan);font-family:Orbitron">Format Converter</h2>
+      <h2 style="color:var(--neon-cyan);font-family:Orbitron">ImgConvert</h2>
       <div class="file-input"><input type="file" id="convertFile" accept="image/*"></div>
       <label>Convert To</label>
       <select id="format">
@@ -367,7 +367,7 @@
     <!-- COMPRESSOR -->
     <section id="compressor" class="tool-page" aria-hidden="true">
       <button class="back" onclick="showHome()">← Back to Tools</button>
-      <h2 style="color:var(--neon-cyan);font-family:Orbitron">Image Compressor</h2>
+      <h2 style="color:var(--neon-cyan);font-family:Orbitron">ImgCompressor</h2>
       <div class="file-input"><input type="file" id="compressFile" accept="image/*"></div>
       <label>Quality (1–100)</label><input type="number" id="quality" value="70" min="1" max="100">
       <button onclick="compressImage()">Compress</button>
@@ -377,7 +377,7 @@
     <!-- URL → HTML (advanced) -->
     <section id="urltool" class="tool-page" aria-hidden="true">
       <button class="back" onclick="showHome()">← Back to Tools</button>
-      <h2 style="color:var(--neon-cyan);font-family:Orbitron">URL → HTML Link Converter</h2>
+      <h2 style="color:var(--neon-cyan);font-family:Orbitron">URL to HTML Converter</h2>
 
       <div class="form-row">
         <label class="muted">Options</label>
@@ -420,7 +420,7 @@ https://example.net/article
     <!-- 2048x1152 Resizer (enhanced UI) -->
     <section id="resizer2048" class="tool-page" aria-hidden="true">
       <button class="back" onclick="showHome()">← Back to Tools</button>
-      <h2 style="color:var(--neon-cyan);font-family:Orbitron">2048 × 1152 Photo Resizer</h2>
+      <h2 style="color:var(--neon-cyan);font-family:Orbitron">2048 × 1152 Cover Maker</h2>
 
       <div class="panel">
         <div class="file-input">
@@ -472,7 +472,7 @@ https://example.net/article
     <!-- 500x500 Interactive Resizer -->
     <section id="resizer500" class="tool-page" aria-hidden="true">
       <button class="back" onclick="showHome()">← Back to Tools</button>
-      <h2 style="color:var(--neon-cyan);font-family:Orbitron">500 × 500 Photo Resizer</h2>
+      <h2 style="color:var(--neon-cyan);font-family:Orbitron">500 × 500 Logo Maker</h2>
 
       <div class="res500-wrap">
         <div class="controls">
@@ -635,7 +635,7 @@ https://example.net/article
       </div>
     </section>
 
-   <footer>
+    <footer>
     Designed & Developed by 
     <a href="https://www.facebook.com/nbliton2/" target="_blank" rel="noopener" style="text-decoration:none; color:inherit; font-weight:600;">
         Liton Shakh Himu
