@@ -292,14 +292,15 @@
 
       <h2 style="color:var(--neon-cyan);font-family:Orbitron">Tools</h2>
       <div class="home">
+        <!-- Order changed as requested -->
+        <div class="tile" onclick="showTool('urltool')"><div style="font-size:26px">🔗</div><h3>URL → HTML</h3><p>Paste URLs to generate anchor tags</p></div>
+        <div class="tile" onclick="showTool('linkShuffle')"><div style="font-size:26px">🔀</div><h3>Link Shuffle</h3><p>Shuffle & copy your URL list</p></div>
+        <div class="tile" onclick="showTool('descShorter')"><div style="font-size:26px">✂️</div><h3>Description Shorter</h3><p>Shorten text to N characters</p></div>
+        <div class="tile" onclick="showTool('resizer500')"><div style="font-size:26px">🖼️</div><h3>500 × 500 Resizer</h3><p>Interactive photo resize & position</p></div>
+        <div class="tile" onclick="showTool('resizer2048')"><div style="font-size:26px">🖼️</div><h3>2048 × 1152 Resizer</h3><p>Resize / fit / crop photos to 2048×1152</p></div>
         <div class="tile" onclick="showTool('resizer')"><div style="font-size:26px">⚙️</div><h3>Resizer</h3><p>Resize images to any px / in / cm</p></div>
         <div class="tile" onclick="showTool('converter')"><div style="font-size:26px">🔁</div><h3>Converter</h3><p>PNG ⇆ JPG ⇆ WEBP</p></div>
         <div class="tile" onclick="showTool('compressor')"><div style="font-size:26px">⚡</div><h3>Compressor</h3><p>Compress images with quality control</p></div>
-        <div class="tile" onclick="showTool('urltool')"><div style="font-size:26px">🔗</div><h3>URL → HTML</h3><p>Paste URLs to generate anchor tags</p></div>
-        <div class="tile" onclick="showTool('resizer2048')"><div style="font-size:26px">🖼️</div><h3>2048 × 1152 Resizer</h3><p>Resize / fit / crop photos to 2048×1152</p></div>
-        <div class="tile" onclick="showTool('resizer500')"><div style="font-size:26px">🖼️</div><h3>500 × 500 Resizer</h3><p>Interactive photo resize & position</p></div>
-        <div class="tile" onclick="showTool('descShorter')"><div style="font-size:26px">✂️</div><h3>Description Shorter</h3><p>Shorten text to N characters</p></div>
-        <div class="tile" onclick="showTool('linkShuffle')"><div style="font-size:26px">🔀</div><h3>Link Shuffle</h3><p>Shuffle & copy your URL list</p></div>
       </div>
     </main>
 
@@ -649,7 +650,7 @@ https://example.net/article
     const home = document.getElementById('homeView');
     if (home) home.style.display = 'block';
 
-    const ids = ['resizer','converter','compressor','urltool','resizer2048','resizer500','descShorter','linkShuffle'];
+    const ids = ['urltool','linkShuffle','descShorter','resizer500','resizer2048','resizer','converter','compressor'];
     ids.forEach(id=>{
       const el=document.getElementById(id);
       if(el){ el.classList.remove('active'); el.setAttribute('aria-hidden','true'); }
@@ -666,7 +667,7 @@ https://example.net/article
     const home = document.getElementById('homeView');
     if (home) home.style.display = 'none';
 
-    const ids = ['resizer','converter','compressor','urltool','resizer2048','resizer500','descShorter','linkShuffle'];
+    const ids = ['urltool','linkShuffle','descShorter','resizer500','resizer2048','resizer','converter','compressor'];
     ids.forEach(k=>{
       const el=document.getElementById(k);
       if(!el) return;
