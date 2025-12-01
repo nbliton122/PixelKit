@@ -127,8 +127,14 @@
     cursor:pointer;
   }
 
+  /* Preview image */
+  .preview-wrap{display:flex;gap:16px;align-items:flex-start;margin-top:12px;flex-wrap:wrap}
+  .preview-img{max-width:420px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);box-shadow:0 10px 30px rgba(0,0,0,0.6);}
+
+  .meta{flex:1;min-width:260px}
+
   footer{margin-top:24px;color:var(--muted);text-align:center}
-  @media(max-width:900px){.home{grid-template-columns:repeat(2,1fr)}}
+  @media(max-width:900px){.home{grid-template-columns:repeat(2,1fr)} .preview-wrap{flex-direction:column}}
 </style>
 </head>
 <body>
@@ -163,6 +169,13 @@
         <div class="tile" onclick="showTool('converter')"><div style="font-size:26px">🔁</div><h3>Converter</h3><p>PNG ⇆ JPG ⇆ WEBP</p></div>
         <div class="tile" onclick="showTool('compressor')"><div style="font-size:26px">⚡</div><h3>Compressor</h3><p>Compress images with quality control</p></div>
         <div class="tile" onclick="showTool('urltool')"><div style="font-size:26px">🔗</div><h3>URL → HTML</h3><p>Paste URLs to generate anchor tags</p></div>
+
+        <!-- NEW TILE: 2048x1152 Photo Resizer -->
+        <div class="tile" onclick="showTool('resizer2048')">
+          <div style="font-size:26px">🖼️</div>
+          <h3>2048 × 1152 Resizer</h3>
+          <p>Resize / fit / crop photos to 2048×1152</p>
+        </div>
       </div>
     </main>
 
@@ -208,6 +221,56 @@
       <textarea id="urlOutput" style="width:100%;height:120px;background:#071226;color:#eaf6ff;border-radius:8px;padding:10px;margin-top:10px"></textarea>
     </section>
 
+    <!-- NEW: 2048x1152 Photo Resizer page -->
+    <section id="resizer2048" class="tool-page" aria-hidden="true">
+      <button class="back" onclick="showHome()">← Back to Tools</button>
+      <h2 style="color:var(--neon-cyan);font-family:Orbitron">2048 × 1152 Photo Resizer</h2>
+
+      <div class="file-input">
+        <input type="file" id="file2048" accept="image/*">
+        <div style="margin-top:10px;color:var(--muted);font-size:13px">Supported: PNG / JPG / WEBP — client-side, no upload to server</div>
+      </div>
+
+      <div style="margin-top:12px;display:flex;gap:12px;flex-wrap:wrap;align-items:center">
+        <label style="min-width:100px">Mode</label>
+        <select id="mode2048" style="max-width:260px">
+          <option value="fit">Fit (preserve aspect, max 2048×1152)</option>
+          <option value="crop">Crop (center → exact 2048×1152)</option>
+        </select>
+
+        <label style="min-width:100px">Output format</label>
+        <select id="outfmt2048" style="max-width:200px">
+          <option value="image/png">PNG</option>
+          <option value="image/jpeg">JPG (smaller)</option>
+          <option value="image/webp">WEBP</option>
+        </select>
+
+        <label style="min-width:100px">Quality (JPG/WEBP)</label>
+        <input id="outq2048" type="number" min="10" max="100" value="92" style="width:110px">
+      </div>
+
+      <div style="margin-top:14px">
+        <button onclick="generate2048()">Generate 2048×1152</button>
+        <button id="download2048" style="display:none;margin-left:8px" onclick="downloadGenerated()">Download</button>
+        <span id="status2048" style="margin-left:12px;color:var(--muted)"></span>
+      </div>
+
+      <div class="preview-wrap" id="previewWrap" style="display:none">
+        <img id="previewImg" class="preview-img" alt="Preview">
+        <div class="meta">
+          <div style="color:var(--muted)">Original:</div>
+          <div id="origMeta" style="margin-bottom:8px;color:var(--muted)"></div>
+
+          <div style="color:var(--muted)">Generated (2048×1152):</div>
+          <div id="genMeta" style="margin-bottom:8px;color:var(--muted)"></div>
+
+          <div id="hint" style="color:var(--muted);font-size:13px">Tip: use "Crop" for exact wallpaper-sized output.</div>
+        </div>
+      </div>
+
+      <div id="canvasContainer" style="display:none"></div>
+    </section>
+
     <footer>© PhotoTools — Neon dark • Built for creators</footer>
   </div>
 
@@ -215,21 +278,22 @@
   // Show home or tool pages (single-page behavior)
   function showHome(){
     document.getElementById('homeView').style.display='block';
-    ['resizer','converter','compressor','urltool'].forEach(id=>{
-      const el=document.getElementById(id); el.classList.remove('active'); el.setAttribute('aria-hidden','true');
+    ['resizer','converter','compressor','urltool','resizer2048'].forEach(id=>{
+      const el=document.getElementById(id); if(el){ el.classList.remove('active'); el.setAttribute('aria-hidden','true'); }
     });
     window.scrollTo(0,0);
   }
   function showTool(id){
     document.getElementById('homeView').style.display='none';
-    ['resizer','converter','compressor','urltool'].forEach(k=>{
+    ['resizer','converter','compressor','urltool','resizer2048'].forEach(k=>{
       const el=document.getElementById(k);
+      if(!el) return;
       if(k===id){ el.classList.add('active'); el.setAttribute('aria-hidden','false'); } else { el.classList.remove('active'); el.setAttribute('aria-hidden','true'); }
     });
-    window.scrollTo(0,0);
+    window.scrollTo({top:0,behavior:'smooth'});
   }
 
-  // Image operations
+  // existing simple tools (kept as before)
   function resizeImage(){
     const file=document.getElementById('resizeFile').files[0]; if(!file){ alert('Please choose an image'); return; }
     const w=parseInt(document.getElementById('w').value,10)||null;
@@ -278,6 +342,139 @@
     let out='';
     lines.forEach(l=>{const t=l.trim(); if(t) out+=`<a href="${t}" target="_blank" rel="noopener noreferrer">${t}</a>\n`;});
     document.getElementById('urlOutput').value=out;
+  }
+
+  // ---------- NEW: 2048x1152 resizer logic ----------
+  const TARGET_W = 2048;
+  const TARGET_H = 1152;
+  let generatedBlobURL = null;
+
+  function humanFileSize(bytes) {
+    if (bytes === 0) return '0 B';
+    const k = 1024, dm = 1;
+    const sizes = ['B','KB','MB','GB','TB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+  }
+
+  async function generate2048(){
+    const fileInput = document.getElementById('file2048');
+    const file = fileInput.files[0];
+    if(!file){ alert('Please choose an image file first'); return; }
+
+    const mode = document.getElementById('mode2048').value;
+    const outfmt = document.getElementById('outfmt2048').value;
+    const qualityVal = parseInt(document.getElementById('outq2048').value,10) || 92;
+    const quality = Math.max(0.1, Math.min(1, qualityVal/100));
+
+    setStatus('Loading image...');
+    // create image bitmap for faster decode (if supported)
+    let img;
+    try {
+      if (window.createImageBitmap) {
+        img = await createImageBitmap(file);
+      } else {
+        img = await loadImageViaElement(URL.createObjectURL(file));
+      }
+    } catch (e) {
+      // fallback
+      img = await loadImageViaElement(URL.createObjectURL(file));
+    }
+
+    // show original meta
+    document.getElementById('origMeta').textContent = `${img.width} × ${img.height} — ${humanFileSize(file.size)}`;
+
+    // prepare canvas
+    const canvas = document.createElement('canvas');
+    canvas.width = TARGET_W; canvas.height = TARGET_H;
+    const ctx = canvas.getContext('2d');
+
+    // Fill transparent / black background based on format (PNG preserve transparency)
+    if(outfmt === 'image/png' || outfmt === 'image/webp'){
+      ctx.clearRect(0,0,TARGET_W,TARGET_H);
+    } else {
+      ctx.fillStyle = '#0b1220';
+      ctx.fillRect(0,0,TARGET_W,TARGET_H);
+    }
+
+    // determine drawing rectangle
+    const iw = img.width, ih = img.height;
+    if(mode === 'fit'){
+      // scale to fit inside TARGET_W x TARGET_H with letterbox
+      const scale = Math.min(TARGET_W / iw, TARGET_H / ih);
+      const dw = Math.round(iw * scale);
+      const dh = Math.round(ih * scale);
+      const dx = Math.round((TARGET_W - dw)/2);
+      const dy = Math.round((TARGET_H - dh)/2);
+      ctx.drawImage(img, 0, 0, iw, ih, dx, dy, dw, dh);
+    } else {
+      // crop mode: scale to cover then center-crop
+      const scale = Math.max(TARGET_W / iw, TARGET_H / ih);
+      const dw = Math.round(iw * scale);
+      const dh = Math.round(ih * scale);
+      // draw image at center so cropping yields center portion
+      const dx = Math.round((TARGET_W - dw)/2);
+      const dy = Math.round((TARGET_H - dh)/2);
+      ctx.drawImage(img, 0, 0, iw, ih, dx, dy, dw, dh);
+    }
+
+    // revoke previous generated url
+    if(generatedBlobURL){ URL.revokeObjectURL(generatedBlobURL); generatedBlobURL = null; }
+
+    // convert canvas to blob (async)
+    setStatus('Rendering...');
+    canvas.toBlob(function(blob){
+      if(!blob){
+        setStatus('Failed to render image.', true);
+        return;
+      }
+      const url = URL.createObjectURL(blob);
+      generatedBlobURL = url;
+
+      // update preview and meta
+      const preview = document.getElementById('previewImg');
+      preview.src = url;
+      document.getElementById('previewWrap').style.display = 'flex';
+
+      document.getElementById('genMeta').textContent = `${TARGET_W} × ${TARGET_H} — ${humanFileSize(blob.size)} — ${outfmt.split('/')[1].toUpperCase()}`;
+
+      // show download button, update its dataset
+      const dl = document.getElementById('download2048');
+      dl.style.display = 'inline-block';
+      dl.dataset.blobUrl = url;
+      dl.dataset.filename = `photo-2048x1152.${outfmt === 'image/png' ? 'png' : (outfmt === 'image/jpeg' ? 'jpg' : 'webp')}`;
+      setStatus('Done.');
+      // hide canvas container (we keep offscreen)
+      const cc = document.getElementById('canvasContainer');
+      cc.innerHTML = ''; // remove previous
+      // store canvas for potential future use (not shown)
+      cc.appendChild(canvas);
+    }, outfmt, quality);
+  }
+
+  function loadImageViaElement(src){
+    return new Promise((resolve, reject)=>{
+      const img = new Image();
+      img.onload = ()=> resolve(img);
+      img.onerror = (e)=> reject(e);
+      img.src = src;
+    });
+  }
+
+  function downloadGenerated(){
+    const dl = document.getElementById('download2048');
+    const url = dl.dataset.blobUrl;
+    const filename = dl.dataset.filename || 'photo-2048x1152.png';
+    if(!url){ alert('No generated image yet.'); return; }
+    const a = document.createElement('a'); a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); a.remove();
+    setStatus('Downloaded');
+  }
+
+  function setStatus(msg, isError){
+    const el = document.getElementById('status2048');
+    el.textContent = msg || '';
+    el.style.color = isError ? '#ff8b8b' : 'var(--muted)';
   }
 
   // initial view
