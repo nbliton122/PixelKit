@@ -191,11 +191,9 @@
   }
 
   function convertURL(){
-    const lines=document.getElementById('urlInput').value.split('
-');
+    const lines=document.getElementById('urlInput').value.split('\n');
     let out='';
-    lines.forEach(l=>{const t=l.trim(); if(t) out+=`<a href="${t}" target="_blank" rel="noopener noreferrer">${t}</a>
-`;});
+    lines.forEach(l=>{const t=l.trim(); if(t) out+=`<a href="${t}" target="_blank" rel="noopener noreferrer">${t}</a>\n`;});
     document.getElementById('urlOutput').value=out;
   }
 
