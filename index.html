@@ -634,7 +634,7 @@ https://example.net/article
       </div>
     </section>
 
-  <footer>
+   <footer>
     Designed & Developed by 
     <a href="https://www.facebook.com/nbliton2/" target="_blank" rel="noopener" style="text-decoration:none; color:inherit; font-weight:600;">
         Liton Shakh Himu
@@ -644,26 +644,72 @@ https://example.net/article
   </div>
 
 <script>
-  // navigation
-  function showHome(){
-    document.getElementById('homeView').style.display='block';
+  // navigation with history.pushState and popstate handling
+  function showHome(push = true){
+    const home = document.getElementById('homeView');
+    if (home) home.style.display = 'block';
+
     const ids = ['resizer','converter','compressor','urltool','resizer2048','resizer500','descShorter','linkShuffle'];
     ids.forEach(id=>{
       const el=document.getElementById(id);
       if(el){ el.classList.remove('active'); el.setAttribute('aria-hidden','true'); }
     });
+
+    if (push) {
+      try { history.pushState({page: 'home'}, '', '#home'); }
+      catch(e){ /* ignore */ }
+    }
     window.scrollTo(0,0);
   }
-  function showTool(id){
-    document.getElementById('homeView').style.display='none';
+
+  function showTool(id, push = true){
+    const home = document.getElementById('homeView');
+    if (home) home.style.display = 'none';
+
     const ids = ['resizer','converter','compressor','urltool','resizer2048','resizer500','descShorter','linkShuffle'];
     ids.forEach(k=>{
       const el=document.getElementById(k);
       if(!el) return;
       if(k===id){ el.classList.add('active'); el.setAttribute('aria-hidden','false'); } else { el.classList.remove('active'); el.setAttribute('aria-hidden','true'); }
     });
+
+    if (push) {
+      try { history.pushState({page: id}, '', '#'+id); }
+      catch(e){ /* ignore */ }
+    }
     window.scrollTo({top:0,behavior:'smooth'});
   }
+
+  // handle browser back/forward
+  window.addEventListener('popstate', function(event){
+    const state = event.state;
+    if(state && state.page){
+      if(state.page === 'home') showHome(false);
+      else showTool(state.page, false);
+      return;
+    }
+
+    const hash = (location.hash || '').replace('#','');
+    if(!hash || hash === 'home'){
+      showHome(false);
+    } else {
+      const el = document.getElementById(hash);
+      if(el) showTool(hash, false);
+      else showHome(false);
+    }
+  });
+
+  // on initial load: open the view according to URL hash (if any)
+  (function initFromHash(){
+    const hash = (location.hash || '').replace('#','');
+    if(!hash || hash === 'home'){
+      showHome(false);
+    } else {
+      const el = document.getElementById(hash);
+      if(el) showTool(hash, false);
+      else showHome(false);
+    }
+  })();
 
   // Helpers
   function humanFileSize(bytes) {
@@ -1242,9 +1288,14 @@ https://example.net/article
     });
   })();
 
-  // initial view
-  showHome();
+  // initial history state: ensure home is in history if none
+  (function ensureInitialState(){
+    if(!history.state){
+      try { history.replaceState({page:'home'}, '', location.hash || '#home'); }
+      catch(e){ /* ignore */ }
+    }
+  })();
+
 </script>
 </body>
 </html>
-
