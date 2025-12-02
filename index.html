@@ -3,32 +3,61 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Passport Generator — Studio Color (fixed preview)</title>
+<title>Passport Generator — Studio Color (loading + hide logs)</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
 <style>
-  body{font-family:Inter,system-ui,Arial;background:#06151a;color:#d8fbff;margin:0;padding:18px}
+  :root{ --bg:#06151a; --panel:#071824; --accent:#7fefff; --muted:#9ad9ea }
+  body{font-family:Inter,system-ui,Arial;background:var(--bg);color:#d8fbff;margin:0;padding:18px}
   .wrap{max-width:1100px;margin:0 auto}
-  h1{color:#7fefff;margin:6px 0 12px}
-  .panel{background:#071824;padding:14px;border-radius:10px;box-shadow:0 8px 30px rgba(0,0,0,0.45)}
+  h1{color:var(--accent);margin:6px 0 12px}
+  .panel{background:var(--panel);padding:14px;border-radius:10px;box-shadow:0 8px 30px rgba(0,0,0,0.45)}
   .row{display:flex;gap:10px;align-items:center;margin:10px 0}
   label{min-width:120px;color:#9fe7f7}
   canvas{background:#0b2430;border-radius:8px;max-width:100%}
   .btn{background:linear-gradient(90deg,#00e6ff,#b86bff);color:#071824;padding:8px 12px;border-radius:20px;border:none;cursor:pointer}
   .small{background:#0b2b34;color:#9fe7f7;padding:8px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.03);cursor:pointer}
-  .log{white-space:pre-wrap;color:#9ad9ea;padding:10px;background:rgba(255,255,255,0.01);border-radius:8px;min-height:120px}
-  .hint{color:#9ad9ea;font-size:13px}
+  .hint{color:var(--muted);font-size:13px}
   #originalCanvas{display:none}
+
+  /* hide on-page logs completely */
+  #log { display: none !important; }
+
+  /* loading overlay */
+  .overlay {
+    position:fixed; inset:0; display:flex;align-items:center;justify-content:center;
+    background: rgba(2,10,14,0.55); z-index:9999; visibility:hidden; opacity:0; transition:opacity .18s ease, visibility .18s;
+  }
+  .overlay.show { visibility:visible; opacity:1; }
+  .loader {
+    background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
+    padding:22px 28px; border-radius:12px; display:flex; gap:14px; align-items:center; box-shadow:0 8px 40px rgba(0,0,0,0.6);
+  }
+  .spinner {
+    width:46px; height:46px; border-radius:50%; position:relative;
+    border:5px solid rgba(255,255,255,0.06); border-top-color:#00e6ff; animation:spin .95s linear infinite;
+  }
+  @keyframes spin { to { transform:rotate(360deg) } }
+  .loader .text { color:#bfeff7; font-weight:600; font-size:15px; }
+  .loader .sub { color:var(--muted); font-size:13px; margin-top:4px }
+
+  /* disabled state for inputs while loading */
+  .disabled { opacity:0.6; pointer-events:none; filter:grayscale(.02); transform:translateZ(0); }
+
+  /* small responsive tweaks */
+  @media(max-width:720px){
+    .row{flex-wrap:wrap}
+  }
 </style>
 </head>
 <body>
 <div class="wrap">
-  <h1>Passport Generator — Studio Color (fixed preview)</h1>
+  <h1>Passport Generator — Studio Color</h1>
 
-  <div class="panel">
+  <div class="panel" id="mainPanel">
     <div style="display:flex;justify-content:space-between;align-items:center">
       <div>
         <strong style="color:#bff6ff">Upload portrait</strong>
-        <div class="hint">Studio color preset added. Pick from image or use color picker. remove.bg call uses the API key embedded below.</div>
+        <div class="hint">Studio color preset added. Pick from image or use color picker. remove.bg call uses embedded API key.</div>
       </div>
       <div style="display:flex;gap:8px;align-items:center">
         <input id="file" type="file" accept="image/*">
@@ -39,7 +68,7 @@
     <div style="display:flex;gap:20px;margin-top:12px;flex-wrap:wrap">
       <div style="flex-basis:420px">
         <canvas id="preview" width="360" height="456"></canvas>
-        <div style="margin-top:8px;color:#9ad9ea">Preview (export 450×570)</div>
+        <div style="margin-top:8px;color:var(--muted)">Preview (export 450×570)</div>
       </div>
 
       <div style="flex:1;min-width:320px">
@@ -56,37 +85,50 @@
 
         <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px">
           <button id="pickFromImg" class="small">Pick color from original image</button>
-          <div class="picker-note" style="font-size:13px;color:#9ad9ea">(Click this, then click a pixel on the preview original image.)</div>
+          <div class="picker-note" style="font-size:13px;color:var(--muted)">(Click this, then click a pixel on the preview original image.)</div>
         </div>
 
-        <div class="row"><label>Brightness</label><input id="brightness" type="range" min="-80" max="80" value="6"><div id="bVal" style="width:40px;text-align:right;color:#9ad9ea">+6</div></div>
-        <div class="row"><label>Contrast</label><input id="contrast" type="range" min="-80" max="80" value="6"><div id="cVal" style="width:40px;text-align:right;color:#9ad9ea">+6</div></div>
-        <div class="row"><label>Feather</label><input id="feather" type="range" min="0" max="30" value="6"><div id="fVal" style="width:40px;text-align:right;color:#9ad9ea">6px</div></div>
+        <div class="row"><label>Brightness</label><input id="brightness" type="range" min="-80" max="80" value="6"><div id="bVal" style="width:40px;text-align:right;color:var(--muted)">+6</div></div>
+        <div class="row"><label>Contrast</label><input id="contrast" type="range" min="-80" max="80" value="6"><div id="cVal" style="width:40px;text-align:right;color:var(--muted)">+6</div></div>
+        <div class="row"><label>Feather</label><input id="feather" type="range" min="0" max="30" value="6"><div id="fVal" style="width:40px;text-align:right;color:var(--muted)">6px</div></div>
 
         <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
-          <button id="downloadPng" class="small">Download PNG</button>
-          <button id="downloadJpg" class="small">Download JPG</button>
-          <button id="downloadPsd" class="small">Download PSD</button>
+          <button id="downloadPng" class="small" disabled>Download PNG</button>
+          <button id="downloadJpg" class="small" disabled>Download JPG</button>
+          <button id="downloadPsd" class="small" disabled>Download PSD</button>
           <button id="reset" class="small">Reset</button>
         </div>
 
-        <div style="margin-top:10px" class="hint">Export size: 450×570 px (1.5 × 1.9 in @ 300 DPI). If remove.bg call fails due to CORS, tell me and I'll provide a tiny proxy server.</div>
+        <div style="margin-top:10px" class="hint">Export size: 450×570 px (1.5 × 1.9 in @ 300 DPI). If remove.bg call fails due to CORS, ask me — I'll provide a tiny proxy server.</div>
       </div>
     </div>
 
-    <div style="margin-top:12px" class="log" id="log">Ready. Studio color is selected. Upload an image to start.</div>
+    <!-- hidden - not shown on UI -->
+    <div id="log">Ready. Studio color is selected. Upload an image to start.</div>
   </div>
 </div>
 
 <!-- hidden helper canvas to show original image for picking -->
 <canvas id="originalCanvas"></canvas>
 
+<!-- loading overlay -->
+<div id="overlay" class="overlay" aria-hidden="true">
+  <div class="loader" role="status" aria-live="polite">
+    <div class="spinner" aria-hidden="true"></div>
+    <div>
+      <div class="text">Processing — please wait…</div>
+      <div class="sub">Removing background & generating passport image</div>
+    </div>
+  </div>
+</div>
+
 <!-- libs -->
 <script src="https://cdn.jsdelivr.net/npm/ag-psd@12.0.0/dist/ag-psd.umd.min.js"></script>
 
 <script>
 /* === NOTE ===
-   remove.bg API key is embedded in this client file (you allowed it).
+  remove.bg API key included client-side as you requested.
+  I have hidden on-page logs and added a loading spinner overlay.
 */
 
 // ====== Your remove.bg API key (exposed client-side) ======
@@ -96,7 +138,6 @@ const REMOVE_BG_KEY = 'jDDFFQjTtwEmhRHP1izPBt5B';
 const fileInput = document.getElementById('file');
 const btnGo = document.getElementById('btnGo');
 const preview = document.getElementById('preview'), ctx = preview.getContext('2d');
-const logEl = document.getElementById('log');
 const bgSel = document.getElementById('bgSel'), bgColor = document.getElementById('bgColor');
 const brightness = document.getElementById('brightness'), contrast = document.getElementById('contrast'), feather = document.getElementById('feather');
 const pickFromImgBtn = document.getElementById('pickFromImg');
@@ -104,15 +145,50 @@ const dlPng = document.getElementById('downloadPng'), dlJpg = document.getElemen
 const resetBtn = document.getElementById('reset');
 const bVal = document.getElementById('bVal'), cVal = document.getElementById('cVal'), fVal = document.getElementById('fVal');
 const origCanvas = document.getElementById('originalCanvas'), origCtx = origCanvas.getContext('2d');
+const overlay = document.getElementById('overlay');
+const mainPanel = document.getElementById('mainPanel');
 
 let uploadedFile = null;
-let origImageObj = null; // the original uploaded image object
-let finalCanvas = null;   // composed final canvas after remove.bg
+let origImageObj = null;
+let finalCanvas = null;
 let picking = false;
 
-function log(...t){ logEl.textContent += t.join(' ') + "\n"; logEl.scrollTop = 9999; }
+// Replace UI log with console output only
+function log(...t){ console.log(...t); }
 
-// UI bindings (both change + input to ensure instant response)
+// spinner control
+function showLoader(){
+  overlay.classList.add('show');
+  // disable UI controls to prevent extra clicks
+  mainPanel.classList.add('disabled');
+  btnGo.disabled = true;
+  fileInput.disabled = true;
+  pickFromImgBtn.disabled = true;
+  bgSel.disabled = true;
+  bgColor.disabled = true;
+  brightness.disabled = true;
+  contrast.disabled = true;
+  feather.disabled = true;
+  dlPng.disabled = true; dlJpg.disabled = true; dlPsd.disabled = true;
+}
+function hideLoader(){
+  overlay.classList.remove('show');
+  mainPanel.classList.remove('disabled');
+  btnGo.disabled = false;
+  fileInput.disabled = false;
+  pickFromImgBtn.disabled = false;
+  bgSel.disabled = false;
+  bgColor.disabled = false;
+  brightness.disabled = false;
+  contrast.disabled = false;
+  feather.disabled = false;
+  // enable download after processing if finalCanvas exists
+  if(finalCanvas){
+    dlPng.disabled = false; dlJpg.disabled = false; dlPsd.disabled = false;
+  }
+}
+
+// UI bindings
 function onBgChangeOrInput(){
   bgColor.style.display = bgSel.value === 'custom' ? 'inline-block' : 'none';
   if (bgSel.value !== 'custom') bgColor.value = bgSel.value;
@@ -121,7 +197,6 @@ function onBgChangeOrInput(){
 bgSel.addEventListener('change', onBgChangeOrInput);
 bgSel.addEventListener('input', onBgChangeOrInput);
 bgColor.addEventListener('input', updatePreviewBackground);
-
 brightness.addEventListener('input', ()=> bVal.textContent = (brightness.value>0?'+':'')+brightness.value);
 contrast.addEventListener('input', ()=> cVal.textContent = (contrast.value>0?'+':'')+contrast.value);
 feather.addEventListener('input', ()=> fVal.textContent = feather.value + 'px');
@@ -135,14 +210,12 @@ fileInput.addEventListener('change', e=>{
   img.crossOrigin = "anonymous";
   img.onload = ()=> {
     origImageObj = img;
-    drawPreviewScaled(img); // show original scaled preview
-    // prepare original canvas for color picking (full resolution)
+    drawPreviewScaled(img);
     origCanvas.width = img.width; origCanvas.height = img.height;
     origCtx.clearRect(0,0,origCanvas.width,origCanvas.height);
     origCtx.drawImage(img,0,0);
     URL.revokeObjectURL(url);
     log('Original image loaded: ' + img.width + '×' + img.height);
-    // update preview background now that original exists
     updatePreviewBackground();
   };
   img.src = url;
@@ -189,17 +262,12 @@ preview.addEventListener('click', (ev)=>{
 // immediate preview update when bg changes or when original image exists
 function updatePreviewBackground() {
   let bg = bgSel.value === 'custom' ? (bgColor.value || '#6ba0e6') : bgSel.value;
-  // ensure preview dims
-  if (!preview.width || !preview.height) {
-    preview.width = 360; preview.height = 456;
-  }
+  if (!preview.width || !preview.height) { preview.width = 360; preview.height = 456; }
   ctx.save();
   ctx.clearRect(0,0,preview.width,preview.height);
-  // fill bg
   ctx.fillStyle = bg;
   ctx.fillRect(0,0,preview.width,preview.height);
 
-  // if final result exists, show scaled final
   if(finalCanvas) {
     ctx.drawImage(finalCanvas, 0, 0, finalCanvas.width, finalCanvas.height, 0, 0, preview.width, preview.height);
   } else if(origImageObj) {
@@ -216,6 +284,7 @@ function updatePreviewBackground() {
 btnGo.addEventListener('click', async ()=>{
   if(!uploadedFile) return alert('Please choose an image first.');
   try{
+    showLoader();
     log('Uploading to remove.bg ...');
     const processedBlob = await callRemoveBg(uploadedFile);
     log('remove.bg returned transparent PNG. Compositing...');
@@ -223,10 +292,11 @@ btnGo.addEventListener('click', async ()=>{
     const composed = compositeOnBg(personImg);
     finalCanvas = composed;
     showFinalResultOnPreview(composed);
-    log('Done. You can download PNG/JPG/PSD now.');
+    log('Done.');
+    hideLoader();
   }catch(err){
     console.error(err);
-    log('Error: ' + (err.message || err));
+    hideLoader();
     alert('Error: ' + (err.message || err));
   }
 });
@@ -238,6 +308,8 @@ function showFinalResultOnPreview(composedCanvas) {
   preview.height = Math.round(preview.width * composedCanvas.height / composedCanvas.width);
   ctx.clearRect(0,0,preview.width,preview.height);
   ctx.drawImage(composedCanvas, 0,0, composedCanvas.width, composedCanvas.height, 0,0, preview.width, preview.height);
+  // enable downloads
+  dlPng.disabled = false; dlJpg.disabled = false; dlPsd.disabled = false;
 }
 
 // remove.bg API call (client-side)
@@ -246,16 +318,26 @@ async function callRemoveBg(file){
   const form = new FormData();
   form.append('image_file', file);
   form.append('size', 'auto');
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: { 'X-Api-Key': REMOVE_BG_KEY },
-    body: form
-  });
-  if(!res.ok){
-    const t = await res.text();
-    throw new Error('remove.bg failed: ' + res.status + ' ' + t);
+  // small timeout wrapper
+  const controller = new AbortController();
+  const timeoutId = setTimeout(()=> controller.abort(), 70000);
+  try{
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'X-Api-Key': REMOVE_BG_KEY },
+      body: form,
+      signal: controller.signal
+    });
+    clearTimeout(timeoutId);
+    if(!res.ok){
+      const t = await res.text();
+      throw new Error('remove.bg failed: ' + res.status + ' ' + t);
+    }
+    return await res.blob();
+  }catch(e){
+    clearTimeout(timeoutId);
+    throw e;
   }
-  return await res.blob();
 }
 
 function blobToImage(blob){
@@ -279,7 +361,7 @@ function compositeOnBg(personImg){
 
   cctx.fillStyle = bg; cctx.fillRect(0,0,OUT_W,OUT_H);
 
-  // cover-style fit: ensure person fills frame reasonably
+  // cover-style fit
   const srcRatio = personImg.width / personImg.height;
   const destRatio = OUT_W / OUT_H;
   let drawW, drawH;
@@ -293,9 +375,7 @@ function compositeOnBg(personImg){
   const dx = Math.round((OUT_W - drawW) / 2), dy = Math.round((OUT_H - drawH) / 2);
   cctx.drawImage(personImg, dx, dy, drawW, drawH);
 
-  // apply brightness/contrast
   applyBrightnessContrast(c, Number(brightness.value), Number(contrast.value));
-  // despill to reduce fringe
   despillCanvas(c, bg, 0.88);
 
   return c;
@@ -372,7 +452,11 @@ function saveBlob(blob, name){
 
 // reset
 resetBtn.addEventListener('click', ()=>{
-  uploadedFile = null; finalCanvas = null; fileInput.value = ''; ctx.clearRect(0,0,preview.width,preview.height); log('Reset.'); updatePreviewBackground();
+  uploadedFile = null; finalCanvas = null; fileInput.value = ''; ctx.clearRect(0,0,preview.width,preview.height);
+  // disable downloads after reset
+  dlPng.disabled = true; dlJpg.disabled = true; dlPsd.disabled = true;
+  log('Reset.');
+  updatePreviewBackground();
 });
 </script>
 </body>
