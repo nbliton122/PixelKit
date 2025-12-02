@@ -3,10 +3,8 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Passport Size Pic Generator — PixelKit</title>
-
+<title>Passport Size Pic Generator — Advanced (ResNet50)</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Orbitron:wght@600&display=swap" rel="stylesheet">
-
 <style>
   :root{
     --bg:#041018;
@@ -16,7 +14,7 @@
     --sample-blue:#5d8fe0;
   }
   *{box-sizing:border-box}
-  body{font-family:Inter,system-ui,Arial;margin:0;background:linear-gradient(180deg,#031017 0%, #041018 60%);color:#dbeef7;padding:22px}
+  body{font-family:Inter,system-ui,Arial;margin:0;background:linear-gradient(180deg,#031017 0%, #041018 60%);color:#dbeef7;padding:20px}
   .wrap{max-width:1100px;margin:0 auto}
   h1{font-family:Orbitron, sans-serif;color:var(--accent1);margin:0 0 12px}
   .panel{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.03)); padding:16px;border-radius:12px; box-shadow: 0 8px 30px rgba(11,20,30,0.6);}
@@ -40,7 +38,7 @@
 </head>
 <body>
 <div class="wrap">
-  <h1>Passport Size Pic Generator</h1>
+  <h1>Passport Size Pic Generator — Advanced</h1>
 
   <div class="grid">
     <div>
@@ -48,7 +46,7 @@
         <div style="display:flex;justify-content:space-between;align-items:center">
           <div>
             <div style="font-weight:700;color:#bff6ff">Upload a portrait</div>
-            <div class="hint">Any person photo — background will be removed and replaced with passport-blue by default.</div>
+            <div class="hint">ResNet50 model will run in-browser (more accurate). Background removal → feather → despill → composite.</div>
           </div>
           <div class="uploader">
             <input id="fileInput" type="file" accept="image/*">
@@ -106,7 +104,7 @@
                 <button id="resetBtn" class="small">Reset</button>
               </div>
 
-              <div class="hint" style="margin-top:6px">Export: 1.5 × 1.9 in @ 300 DPI = 450 × 570 px. For better edges upload clear, well-lit portrait.</div>
+              <div class="hint" style="margin-top:6px">Export: 1.5 × 1.9 in @ 300 DPI = 450 × 570 px. ResNet50 is heavier but gives better masks — please be patient while model loads.</div>
             </div>
           </div>
         </div>
@@ -116,7 +114,7 @@
     <div class="right">
       <div class="panel">
         <strong style="color:#bff6ff">Preview / Logs</strong>
-        <div id="log" class="log">Loading BodyPix model...</div>
+        <div id="log" class="log">Loading BodyPix ResNet50 model...</div>
       </div>
 
       <div style="height:12px"></div>
@@ -124,18 +122,18 @@
       <div class="panel">
         <strong style="color:#bff6ff">How it works</strong>
         <ol style="color:#9ad9ea">
-          <li>Load BodyPix model in browser (person segmentation)</li>
-          <li>Create mask → blur/feather edges → composite over blue background</li>
-          <li>Apply brightness / contrast / sharpen → crop to passport ratio → export</li>
+          <li>Load BodyPix ResNet50 in browser (high accuracy)</li>
+          <li>Segment person → refine mask (erode/dilate trick) → blur (feather)</li>
+          <li>Composite on blue → despill (remove blue fringe) → apply filters → crop → export</li>
         </ol>
       </div>
     </div>
   </div>
 
-  <footer>Client-only solution. For pro layered PSD / hair-edge perfection use server-side processing (I can implement).</footer>
+  <footer>Client-only solution. For production-grade layered PSD & perfect hair, server-side matting is recommended (I can implement that too).</footer>
 </div>
 
-<!-- Libraries -->
+<!-- libs -->
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.21.0/dist/tf.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/body-pix@2.0.5/dist/body-pix.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
@@ -143,7 +141,7 @@
 
 <script>
 (async function(){
-  // UI refs
+  // DOM refs
   const fileInput = id('fileInput'), autoProcess = id('autoProcess');
   const preview = id('preview'), ctx = preview.getContext('2d');
   const applyBtn = id('applyBtn'), resetBtn = id('resetBtn');
@@ -154,23 +152,24 @@
   const bVal = id('bVal'), cVal = id('cVal'), sVal = id('sVal'), fVal = id('fVal');
   const logEl = id('log');
 
-  function log(...t){ logEl.textContent += t.join(' ') + "\n"; logEl.scrollTop = 9999; }
+  function log(...t){ logEl.textContent += t.join(' ') + "\\n"; logEl.scrollTop = 9999; }
 
-  // export size
   const EXPORT_W = 450, EXPORT_H = 570;
-
-  // state
   let originalImage = null;
   let bodyPixNet = null;
   let latestCanvas = null;
 
-  // load BodyPix (higher accuracy)
-  log('Loading BodyPix model (high accuracy) — this may take a few seconds...');
+  // load ResNet50 BodyPix for higher accuracy
+  log('Loading BodyPix (ResNet50) — this may take 5–20 seconds depending on connection...');
   try{
-    bodyPixNet = await bodyPix.load({ architecture: 'MobileNetV1', multiplier: 1.0, outputStride: 16 });
-    log('BodyPix loaded.');
+    bodyPixNet = await bodyPix.load({
+      architecture: 'ResNet50',
+      outputStride: 16,
+      quantBytes: 2 // reduce weight slightly; change to 1 for smaller but lower precision
+    });
+    log('BodyPix ResNet50 loaded.');
   }catch(e){
-    log('BodyPix load failed:', e.message || e);
+    log('Model load failed:', e.message || e);
     bodyPixNet = null;
   }
 
@@ -192,10 +191,7 @@
   autoProcess.addEventListener('click', ()=> applyAndProcess());
   applyBtn.addEventListener('click', ()=> applyAndProcess());
   resetBtn.addEventListener('click', ()=> {
-    originalImage = null;
-    ctx.clearRect(0,0,preview.width,preview.height);
-    fileInput.value = '';
-    log('Reset.');
+    originalImage = null; ctx.clearRect(0,0,preview.width,preview.height); fileInput.value=''; log('Reset.');
   });
 
   bgSelect.addEventListener('change', ()=> { bgColor.style.display = bgSelect.value === 'custom' ? 'inline-block' : 'none'; });
@@ -224,7 +220,7 @@
     }
   });
 
-  // draw scaled preview immediately after upload
+  // draw scaled preview on upload
   function drawPreviewScaled(img){
     const maxW = 360, maxH = 456;
     let w = img.width, h = img.height;
@@ -235,31 +231,62 @@
     ctx.drawImage(img, 0,0,w,h, 0,0, dw,dh);
   }
 
-  // main processing function
+  // helper: hex->rgb
+  function hexToRgb(hex){
+    hex = hex.replace('#','');
+    if(hex.length===3) hex = hex.split('').map(s=>s+s).join('');
+    return { r: parseInt(hex.substring(0,2),16), g: parseInt(hex.substring(2,4),16), b: parseInt(hex.substring(4,6),16) };
+  }
+
+  function chosenBgColor(){
+    if(bgSelect.value === 'preset') return '#5d8fe0';
+    if(bgSelect.value === 'white') return '#ffffff';
+    return bgColor.value || '#5d8fe0';
+  }
+
+  // despill: reduce background-color spill (simple heuristic)
+  function despill(canvas, bgHex='#5d8fe0', strength=0.7){
+    const ctxLocal = canvas.getContext('2d');
+    const img = ctxLocal.getImageData(0,0,canvas.width,canvas.height);
+    const data = img.data;
+    const bg = hexToRgb(bgHex);
+    for(let i=0;i<data.length;i+=4){
+      const r = data[i], g = data[i+1], b = data[i+2];
+      // detect bluish fringe: blue significantly higher than red/green
+      if (b > r + 18 && b > g + 18) {
+        // compute how much to reduce blue based on difference and strength
+        const diff = Math.min(255, b - Math.max(r,g));
+        const reduce = Math.round(diff * strength * 0.9);
+        data[i+2] = clamp(b - reduce);
+        // optionally boost r/g slightly for natural look
+        data[i] = clamp(r + Math.round(reduce * 0.12));
+        data[i+1] = clamp(g + Math.round(reduce * 0.06));
+      }
+    }
+    ctxLocal.putImageData(img,0,0);
+  }
+
+  // main function
   async function applyAndProcess(){
     if(!originalImage) return alert('Please upload a photo first.');
     log('Processing started...');
-    // working canvas
-    const workW = Math.min(originalImage.width, 1200);
+    // working canvas resolution (limit)
+    const workW = Math.min(originalImage.width, 1400);
     const workH = Math.round(originalImage.height * (workW / originalImage.width));
     const work = document.createElement('canvas'); work.width = workW; work.height = workH;
     const wctx = work.getContext('2d');
     wctx.drawImage(originalImage, 0,0, workW, workH);
 
-    // segmentation
-    let compCanvas = document.createElement('canvas');
-    compCanvas.width = workW; compCanvas.height = workH;
-    const cctx = compCanvas.getContext('2d');
+    // composite canvas
+    const comp = document.createElement('canvas'); comp.width = workW; comp.height = workH;
+    const cctx = comp.getContext('2d');
 
     if(!bodyPixNet){
-      log('No segmentation model available — using original image with chosen bg fill.');
-      // just fill background and draw original centered
-      const chosenBg = chosenBgColor();
-      cctx.fillStyle = chosenBg; cctx.fillRect(0,0,compCanvas.width,compCanvas.height);
+      log('No segmentation model; skipping background removal.');
+      cctx.fillStyle = chosenBgColor(); cctx.fillRect(0,0,comp.width,comp.height);
       cctx.drawImage(work, 0,0);
     } else {
-      log('Running segmentation...');
-      // higher internalResolution improves edges (slower)
+      log('Running segmentation (ResNet50) — this may take a few seconds...');
       const seg = await bodyPixNet.segmentPerson(work, {
         internalResolution: 'high',
         segmentationThreshold: 0.7,
@@ -267,114 +294,78 @@
       });
       log('Segmentation done.');
 
-      // get mask and draw it
+      // raw mask -> maskCanvas
       const rawMask = bodyPix.toMask(seg, {r:255,g:255,b:255,a:255}, {r:0,g:0,b:0,a:0});
       const maskCanvas = document.createElement('canvas'); maskCanvas.width = workW; maskCanvas.height = workH;
       const mctx = maskCanvas.getContext('2d');
       mctx.putImageData(rawMask, 0,0);
 
-      // feather / blur the mask for soft edges
+      // refine mask: small erode (downscale/upscale trick) to remove speckles
+      const erodeFactor = Math.max(1, Math.round((feather.value/12) + 1)); // tweak
+      if(erodeFactor > 1){
+        const tmp = document.createElement('canvas'); tmp.width = Math.max(1,Math.floor(workW/erodeFactor)); tmp.height = Math.max(1,Math.floor(workH/erodeFactor));
+        tmp.getContext('2d').drawImage(maskCanvas,0,0,tmp.width,tmp.height);
+        mctx.clearRect(0,0,maskCanvas.width,maskCanvas.height);
+        mctx.drawImage(tmp,0,0,tmp.width,tmp.height, 0,0, maskCanvas.width, maskCanvas.height);
+      }
+
+      // blur mask (feather)
       const blurPx = Number(feather.value) || 8;
-      if('filter' in mctx) {
-        // use an offscreen tmp to blur
-        const tmp = document.createElement('canvas'); tmp.width = maskCanvas.width; tmp.height = maskCanvas.height;
-        const tctx = tmp.getContext('2d');
-        tctx.putImageData(rawMask, 0,0);
+      if('filter' in mctx){
+        const tmp2 = document.createElement('canvas'); tmp2.width = maskCanvas.width; tmp2.height = maskCanvas.height;
+        const tctx = tmp2.getContext('2d');
+        tctx.putImageData(mctx.getImageData(0,0,maskCanvas.width,maskCanvas.height), 0, 0);
         tctx.filter = `blur(${blurPx}px)`;
-        tctx.drawImage(tmp, 0,0);
-        // replace maskCanvas with blurred tmp
+        tctx.drawImage(tmp2, 0, 0);
         mctx.clearRect(0,0,maskCanvas.width,maskCanvas.height);
-        mctx.drawImage(tmp, 0,0);
+        mctx.drawImage(tmp2, 0, 0);
       } else {
-        // fallback simple scale trick
-        const tmp = document.createElement('canvas'); tmp.width = maskCanvas.width; tmp.height = maskCanvas.height;
-        const tctx = tmp.getContext('2d');
-        tctx.putImageData(rawMask, 0,0);
-        const scale = Math.max(1, Math.round(blurPx/2));
-        const sw = Math.max(1, Math.floor(maskCanvas.width / scale));
-        const sh = Math.max(1, Math.floor(maskCanvas.height / scale));
-        const tiny = document.createElement('canvas'); tiny.width = sw; tiny.height = sh;
-        const tinyCtx = tiny.getContext('2d');
-        tinyCtx.drawImage(tmp, 0,0,sw,sh);
+        // fallback: tiny downscale/upscale trick
+        const tmp2 = document.createElement('canvas'); tmp2.width = Math.max(1,Math.floor(maskCanvas.width/4)); tmp2.height = Math.max(1,Math.floor(maskCanvas.height/4));
+        tmp2.getContext('2d').drawImage(maskCanvas,0,0,tmp2.width,tmp2.height);
         mctx.clearRect(0,0,maskCanvas.width,maskCanvas.height);
-        mctx.drawImage(tiny, 0,0,sw,sh, 0,0,maskCanvas.width,maskCanvas.height);
+        mctx.drawImage(tmp2,0,0,tmp2.width,tmp2.height, 0,0,maskCanvas.width, maskCanvas.height);
       }
 
-      // Composite: fill background then draw person pixels weighted by mask alpha
-      const chosenBg = chosenBgColor();
-      cctx.fillStyle = chosenBg; cctx.fillRect(0,0,compCanvas.width,compCanvas.height);
-
-      const src = wctx.getImageData(0,0,workW,workH);
-      const maskData = mctx.getImageData(0,0,maskCanvas.width,maskCanvas.height);
-      const out = cctx.createImageData(compCanvas.width, compCanvas.height);
-      // compose per-pixel
-      for(let i=0;i<src.data.length;i+=4){
-        const a = maskData.data[i+3]/255; // 1 => person
-        // background RGB from chosenBg
-        // compute bg rgb quickly
-        // parse chosenBg hex
-        // we'll precompute bg rgb below for speed; but simple: read existing fill via hexToRgb
-      }
-
-      // faster approach: draw mask as globalAlpha mask using compositing
-      // create an offscreen person canvas
+      // Create person canvas via destination-in (keeps alpha)
       const personCanvas = document.createElement('canvas'); personCanvas.width = workW; personCanvas.height = workH;
       const pctx = personCanvas.getContext('2d');
-      // draw original image
-      pctx.drawImage(work,0,0);
-      // use maskCanvas as alpha mask by using destination-in trick
+      pctx.drawImage(work, 0,0);
       pctx.globalCompositeOperation = 'destination-in';
-      pctx.drawImage(maskCanvas,0,0);
-
-      // now cctx already has filled background; draw personCanvas on top
-      cctx.globalCompositeOperation = 'source-over';
-      cctx.drawImage(personCanvas, 0,0);
-      // reset composite operations
+      pctx.drawImage(maskCanvas, 0,0);
       pctx.globalCompositeOperation = 'source-over';
-      cctx.globalCompositeOperation = 'source-over';
+
+      // composite over chosen background
+      cctx.fillStyle = chosenBgColor(); cctx.fillRect(0,0,comp.width,comp.height);
+      cctx.drawImage(personCanvas, 0,0);
+
+      // despill to reduce blue halo
+      despill(comp, chosenBgColor(), 0.8);
     }
 
-    // apply brightness/contrast/sharpen on compCanvas
-    applyFiltersToCanvas(compCanvas, Number(brightness.value), Number(contrast.value), Number(sharpen.value));
+    // apply bright/contrast/sharpen on comp
+    applyFiltersToCanvas(comp, Number(brightness.value), Number(contrast.value), Number(sharpen.value));
 
-    // passport crop centered to target ratio and resize to EXPORT_W x EXPORT_H
+    // passport crop and resize to EXPORT_W x EXPORT_H
     const targetRatio = EXPORT_W / EXPORT_H;
-    let sx = 0, sy = 0, sw = compCanvas.width, sh = compCanvas.height;
-    if(compCanvas.width / compCanvas.height > targetRatio){
-      sw = Math.round(compCanvas.height * targetRatio);
-      sx = Math.round((compCanvas.width - sw)/2);
+    let sx = 0, sy = 0, sw = comp.width, sh = comp.height;
+    if(comp.width / comp.height > targetRatio){
+      sw = Math.round(comp.height * targetRatio); sx = Math.round((comp.width - sw)/2);
     } else {
-      sh = Math.round(compCanvas.width / targetRatio);
-      sy = Math.round((compCanvas.height - sh)/2);
+      sh = Math.round(comp.width / targetRatio); sy = Math.round((comp.height - sh)/2);
     }
     const final = document.createElement('canvas'); final.width = EXPORT_W; final.height = EXPORT_H;
     const fctx = final.getContext('2d');
-    // background fill to avoid transparency fringes
-    fctx.fillStyle = chosenBgColor();
-    fctx.fillRect(0,0,final.width,final.height);
-    fctx.drawImage(compCanvas, sx,sy, sw,sh, 0,0, final.width, final.height);
+    fctx.fillStyle = chosenBgColor(); fctx.fillRect(0,0,final.width,final.height);
+    fctx.drawImage(comp, sx,sy, sw,sh, 0,0, final.width, final.height);
 
     // preview scaled
-    preview.width = Math.min(420, final.width);
-    preview.height = Math.round(preview.width * final.height / final.width);
+    preview.width = Math.min(420, final.width); preview.height = Math.round(preview.width * final.height / final.width);
     ctx.clearRect(0,0,preview.width,preview.height);
     ctx.drawImage(final, 0,0, final.width, final.height, 0,0, preview.width, preview.height);
 
     latestCanvas = final;
     log('Processing complete — export ready at ' + EXPORT_W + '×' + EXPORT_H + ' px.');
-  }
-
-  // helper returns hex bg color
-  function chosenBgColor(){
-    if(bgSelect.value === 'preset' || bgSelect.value === 'blue') return getComputedStyle(document.documentElement).getPropertyValue('--sample-blue') || '#5d8fe0';
-    if(bgSelect.value === 'white') return '#ffffff';
-    return bgColor.value || '#5d8fe0';
-  }
-
-  function chosenBgColor(){ // ensure returns visible hex
-    if(bgSelect.value === 'preset' || bgSelect.value === 'blue') return '#5d8fe0';
-    if(bgSelect.value === 'white') return '#ffffff';
-    return bgColor.value || '#5d8fe0';
   }
 
   // image filters: brightness (add), contrast (scale), sharpen (convolution)
@@ -434,7 +425,7 @@
     return ag.encodePsd(psd);
   }
 
-  // expose saveAs (FileSaver)
+  // saveAs
   function saveAs(blob, name){ try{ window.saveAs(blob, name); }catch(e){ const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=name; a.click(); URL.revokeObjectURL(a.href); } }
 
 })();
