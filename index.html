@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Passport Generator — remove.bg (studio color)</title>
+<title>Passport Generator — Studio Color (fixed preview)</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
 <style>
   body{font-family:Inter,system-ui,Arial;background:#06151a;color:#d8fbff;margin:0;padding:18px}
@@ -22,13 +22,13 @@
 </head>
 <body>
 <div class="wrap">
-  <h1>Passport Generator — Studio Color</h1>
+  <h1>Passport Generator — Studio Color (fixed preview)</h1>
 
   <div class="panel">
     <div style="display:flex;justify-content:space-between;align-items:center">
       <div>
         <strong style="color:#bff6ff">Upload portrait</strong>
-        <div class="hint">Studio color added as a preset. You can still pick custom color or sample blues.</div>
+        <div class="hint">Studio color preset added. Pick from image or use color picker. remove.bg call uses the API key embedded below.</div>
       </div>
       <div style="display:flex;gap:8px;align-items:center">
         <input id="file" type="file" accept="image/*">
@@ -45,9 +45,8 @@
       <div style="flex:1;min-width:320px">
         <div class="row"><label>Background color</label>
           <select id="bgSel">
-            <!-- Studio color added and set as default -->
             <option value="#6ba0e6" selected>Studio color</option>
-            <option value="#5d8fe0">Passport blue (default old)</option>
+            <option value="#5d8fe0">Passport blue (old)</option>
             <option value="#5a8bd1">Sample blue 2</option>
             <option value="#4f88c2">Sample blue 3</option>
             <option value="custom">Custom / pick from image</option>
@@ -71,14 +70,15 @@
           <button id="reset" class="small">Reset</button>
         </div>
 
-        <div style="margin-top:10px" class="hint">Export size: 450×570 px (1.5 × 1.9 in @ 300 DPI). If remove.bg call fails due to CORS, I can provide a tiny proxy server.</div>
+        <div style="margin-top:10px" class="hint">Export size: 450×570 px (1.5 × 1.9 in @ 300 DPI). If remove.bg call fails due to CORS, tell me and I'll provide a tiny proxy server.</div>
       </div>
     </div>
 
-    <div style="margin-top:12px" class="log" id="log">Ready. Studio color is set as preset. If you want a different exact tone, tell me the hex and I'll change it.</div>
+    <div style="margin-top:12px" class="log" id="log">Ready. Studio color is selected. Upload an image to start.</div>
   </div>
 </div>
 
+<!-- hidden helper canvas to show original image for picking -->
 <canvas id="originalCanvas"></canvas>
 
 <!-- libs -->
@@ -86,9 +86,7 @@
 
 <script>
 /* === NOTE ===
-  This client HTML calls remove.bg directly and includes your API key.
-  You told me API leak is not a problem, so it's embedded below.
-  If you change your mind later, use a server proxy instead.
+   remove.bg API key is embedded in this client file (you allowed it).
 */
 
 // ====== Your remove.bg API key (exposed client-side) ======
@@ -108,14 +106,22 @@ const bVal = document.getElementById('bVal'), cVal = document.getElementById('cV
 const origCanvas = document.getElementById('originalCanvas'), origCtx = origCanvas.getContext('2d');
 
 let uploadedFile = null;
-let origImageObj = null;
-let finalCanvas = null;
+let origImageObj = null; // the original uploaded image object
+let finalCanvas = null;   // composed final canvas after remove.bg
 let picking = false;
 
 function log(...t){ logEl.textContent += t.join(' ') + "\n"; logEl.scrollTop = 9999; }
 
-// UI bindings
-bgSel.addEventListener('change', ()=> { bgColor.style.display = bgSel.value === 'custom' ? 'inline-block' : 'none'; });
+// UI bindings (both change + input to ensure instant response)
+function onBgChangeOrInput(){
+  bgColor.style.display = bgSel.value === 'custom' ? 'inline-block' : 'none';
+  if (bgSel.value !== 'custom') bgColor.value = bgSel.value;
+  updatePreviewBackground();
+}
+bgSel.addEventListener('change', onBgChangeOrInput);
+bgSel.addEventListener('input', onBgChangeOrInput);
+bgColor.addEventListener('input', updatePreviewBackground);
+
 brightness.addEventListener('input', ()=> bVal.textContent = (brightness.value>0?'+':'')+brightness.value);
 contrast.addEventListener('input', ()=> cVal.textContent = (contrast.value>0?'+':'')+contrast.value);
 feather.addEventListener('input', ()=> fVal.textContent = feather.value + 'px');
@@ -129,20 +135,22 @@ fileInput.addEventListener('change', e=>{
   img.crossOrigin = "anonymous";
   img.onload = ()=> {
     origImageObj = img;
-    drawPreview(img);
-    // prepare original canvas for color picking
+    drawPreviewScaled(img); // show original scaled preview
+    // prepare original canvas for color picking (full resolution)
     origCanvas.width = img.width; origCanvas.height = img.height;
     origCtx.clearRect(0,0,origCanvas.width,origCanvas.height);
     origCtx.drawImage(img,0,0);
     URL.revokeObjectURL(url);
     log('Original image loaded: ' + img.width + '×' + img.height);
+    // update preview background now that original exists
+    updatePreviewBackground();
   };
   img.src = url;
 });
 
-function drawPreview(img){
+function drawPreviewScaled(img){
   const maxW = 360, maxH = 456;
-  let w = img.width, h = img.height;
+  const w = img.width, h = img.height;
   const ratio = Math.min(maxW/w, maxH/h, 1);
   const dw = Math.round(w*ratio), dh = Math.round(h*ratio);
   preview.width = dw; preview.height = dh;
@@ -150,12 +158,12 @@ function drawPreview(img){
   ctx.drawImage(img, 0,0,w,h, 0,0,dw,dh);
 }
 
-// pick-from-image flow
+// pick color from original image
 pickFromImgBtn.addEventListener('click', ()=>{
   if(!origImageObj) return alert('Upload image first to pick a color from it.');
   picking = true;
-  drawPreview(origImageObj);
-  log('Pick mode: click on the preview to pick a background color from the original image.');
+  drawPreviewScaled(origImageObj);
+  log('Pick mode active — click on the preview to sample a color.');
 });
 
 preview.addEventListener('click', (ev)=>{
@@ -165,29 +173,56 @@ preview.addEventListener('click', (ev)=>{
   const scaleX = origImageObj.width / preview.width;
   const scaleY = origImageObj.height / preview.height;
   const ox = Math.floor(cx * scaleX), oy = Math.floor(cy * scaleY);
-  if(ox < 0 || oy < 0 || ox >= origCanvas.width || oy >= origCanvas.height) return;
+  if(ox < 0 || oy < 0 || ox >= origCanvas.width || oy >= origCanvas.height) {
+    alert('Click inside the image area.');
+    return;
+  }
   const pd = origCtx.getImageData(ox, oy, 1, 1).data;
   const hex = rgbToHex(pd[0], pd[1], pd[2]);
   bgSel.value = 'custom'; bgColor.style.display = 'inline-block'; bgColor.value = hex;
   picking = false;
-  drawPreview(origImageObj);
-  log('Picked color ' + hex + ' from image at ('+ox+','+oy+'). It is set as background.');
+  drawPreviewScaled(origImageObj);
+  updatePreviewBackground();
+  log('Picked color ' + hex + ' from image at ('+ox+','+oy+').');
 });
 
-// main flow
+// immediate preview update when bg changes or when original image exists
+function updatePreviewBackground() {
+  let bg = bgSel.value === 'custom' ? (bgColor.value || '#6ba0e6') : bgSel.value;
+  // ensure preview dims
+  if (!preview.width || !preview.height) {
+    preview.width = 360; preview.height = 456;
+  }
+  ctx.save();
+  ctx.clearRect(0,0,preview.width,preview.height);
+  // fill bg
+  ctx.fillStyle = bg;
+  ctx.fillRect(0,0,preview.width,preview.height);
+
+  // if final result exists, show scaled final
+  if(finalCanvas) {
+    ctx.drawImage(finalCanvas, 0, 0, finalCanvas.width, finalCanvas.height, 0, 0, preview.width, preview.height);
+  } else if(origImageObj) {
+    const w = origImageObj.width, h = origImageObj.height;
+    const ratio = Math.min(preview.width / w, preview.height / h, 1);
+    const dw = Math.round(w * ratio), dh = Math.round(h * ratio);
+    const dx = Math.round((preview.width - dw)/2), dy = Math.round((preview.height - dh)/2);
+    ctx.drawImage(origImageObj, 0,0,w,h, dx, dy, dw, dh);
+  }
+  ctx.restore();
+}
+
+// main remove.bg + composite flow
 btnGo.addEventListener('click', async ()=>{
   if(!uploadedFile) return alert('Please choose an image first.');
   try{
     log('Uploading to remove.bg ...');
     const processedBlob = await callRemoveBg(uploadedFile);
-    log('remove.bg returned image (transparent). Compositing now...');
+    log('remove.bg returned transparent PNG. Compositing...');
     const personImg = await blobToImage(processedBlob);
     const composed = compositeOnBg(personImg);
     finalCanvas = composed;
-    preview.width = Math.min(420, composed.width);
-    preview.height = Math.round(preview.width * composed.height / composed.width);
-    ctx.clearRect(0,0,preview.width,preview.height);
-    ctx.drawImage(composed, 0,0, composed.width, composed.height, 0,0, preview.width, preview.height);
+    showFinalResultOnPreview(composed);
     log('Done. You can download PNG/JPG/PSD now.');
   }catch(err){
     console.error(err);
@@ -196,12 +231,30 @@ btnGo.addEventListener('click', async ()=>{
   }
 });
 
-// remove.bg client call
+// show final composed canvas on the preview (scaled)
+function showFinalResultOnPreview(composedCanvas) {
+  finalCanvas = composedCanvas;
+  preview.width = Math.min(420, composedCanvas.width);
+  preview.height = Math.round(preview.width * composedCanvas.height / composedCanvas.width);
+  ctx.clearRect(0,0,preview.width,preview.height);
+  ctx.drawImage(composedCanvas, 0,0, composedCanvas.width, composedCanvas.height, 0,0, preview.width, preview.height);
+}
+
+// remove.bg API call (client-side)
 async function callRemoveBg(file){
   const url = 'https://api.remove.bg/v1.0/removebg';
-  const form = new FormData(); form.append('image_file', file); form.append('size','auto');
-  const res = await fetch(url, { method:'POST', headers:{ 'X-Api-Key': REMOVE_BG_KEY }, body: form });
-  if(!res.ok){ const t = await res.text(); throw new Error('remove.bg failed: ' + res.status + ' ' + t); }
+  const form = new FormData();
+  form.append('image_file', file);
+  form.append('size', 'auto');
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'X-Api-Key': REMOVE_BG_KEY },
+    body: form
+  });
+  if(!res.ok){
+    const t = await res.text();
+    throw new Error('remove.bg failed: ' + res.status + ' ' + t);
+  }
   return await res.blob();
 }
 
@@ -215,6 +268,7 @@ function blobToImage(blob){
   });
 }
 
+// composite transparent person PNG onto chosen bg and apply filters
 function compositeOnBg(personImg){
   const OUT_W = 450, OUT_H = 570;
   const c = document.createElement('canvas'); c.width = OUT_W; c.height = OUT_H;
@@ -225,6 +279,7 @@ function compositeOnBg(personImg){
 
   cctx.fillStyle = bg; cctx.fillRect(0,0,OUT_W,OUT_H);
 
+  // cover-style fit: ensure person fills frame reasonably
   const srcRatio = personImg.width / personImg.height;
   const destRatio = OUT_W / OUT_H;
   let drawW, drawH;
@@ -238,12 +293,15 @@ function compositeOnBg(personImg){
   const dx = Math.round((OUT_W - drawW) / 2), dy = Math.round((OUT_H - drawH) / 2);
   cctx.drawImage(personImg, dx, dy, drawW, drawH);
 
+  // apply brightness/contrast
   applyBrightnessContrast(c, Number(brightness.value), Number(contrast.value));
+  // despill to reduce fringe
   despillCanvas(c, bg, 0.88);
 
   return c;
 }
 
+// brightness & contrast
 function applyBrightnessContrast(canvas, bright=0, contrast=0){
   const ctx2 = canvas.getContext('2d');
   const img = ctx2.getImageData(0,0,canvas.width,canvas.height);
@@ -259,6 +317,7 @@ function applyBrightnessContrast(canvas, bright=0, contrast=0){
   ctx2.putImageData(img,0,0);
 }
 
+// despill: reduce blue-heavy fringe
 function despillCanvas(canvas, bgHex='#6ba0e6', strength=0.85){
   const ctx2 = canvas.getContext('2d');
   const img = ctx2.getImageData(0,0,canvas.width,canvas.height);
@@ -310,6 +369,11 @@ function saveBlob(blob, name){
   a.remove();
   setTimeout(()=> URL.revokeObjectURL(a.href), 2000);
 }
+
+// reset
+resetBtn.addEventListener('click', ()=>{
+  uploadedFile = null; finalCanvas = null; fileInput.value = ''; ctx.clearRect(0,0,preview.width,preview.height); log('Reset.'); updatePreviewBackground();
+});
 </script>
 </body>
 </html>
