@@ -3,134 +3,80 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Passport Size Pic Generator — Advanced (ResNet50)</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Orbitron:wght@600&display=swap" rel="stylesheet">
+<title>Passport Generator — Final (Improved Mask & Despill)</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
 <style>
-  :root{
-    --bg:#041018;
-    --panel:#071824;
-    --accent1:#00e6ff;
-    --accent2:#b86bff;
-    --sample-blue:#5d8fe0;
-  }
+  :root{ --bg:#041018; --panel:#071824; --accent:#00e6ff; --sample-blue:#5d8fe0; }
   *{box-sizing:border-box}
-  body{font-family:Inter,system-ui,Arial;margin:0;background:linear-gradient(180deg,#031017 0%, #041018 60%);color:#dbeef7;padding:20px}
-  .wrap{max-width:1100px;margin:0 auto}
-  h1{font-family:Orbitron, sans-serif;color:var(--accent1);margin:0 0 12px}
-  .panel{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.03)); padding:16px;border-radius:12px; box-shadow: 0 8px 30px rgba(11,20,30,0.6);}
-  .grid{display:grid;grid-template-columns:1fr 380px;gap:18px}
-  @media (max-width:980px){ .grid{grid-template-columns:1fr} .right{order:-1} }
-
-  .uploader{display:flex;gap:12px;align-items:center}
-  input[type="file"]{background:#0b2028;color:#bff6ff;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.02)}
-  .btn{background:linear-gradient(90deg,var(--accent1),var(--accent2));color:#071824;padding:10px 14px;border-radius:30px;text-decoration:none;border:none;font-weight:700;cursor:pointer}
-  .small{padding:8px 10px;border-radius:8px;background:#0b2028;color:var(--accent1);border:1px solid rgba(0,230,255,0.06);cursor:pointer}
-  .controls{display:flex;flex-direction:column;gap:10px;margin-top:12px}
-  .row{display:flex;gap:8px;align-items:center}
-  label{min-width:110px;color:#9ad9ea;font-size:14px}
+  body{font-family:Inter,system-ui,Arial;margin:0;background:#041018;color:#dbeef7;padding:18px}
+  .wrap{max-width:1050px;margin:0 auto}
+  h1{color:var(--accent);margin:0 0 12px}
+  .panel{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.03)); padding:14px;border-radius:10px}
+  .grid{display:grid;grid-template-columns:1fr 360px;gap:16px}
+  @media(max-width:980px){.grid{grid-template-columns:1fr}}
+  canvas{background:#0c1b22;border-radius:8px;display:block;max-width:100%}
+  .row{display:flex;gap:8px;align-items:center;margin:8px 0}
+  label{min-width:110px;color:#9ad9ea}
   input[type=range]{flex:1}
-  canvas{background:#0c1b22;border-radius:8px;display:block;width:100%;height:auto;max-width:420px}
-  .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
-  .log{font-size:13px;color:#9ad9ea;min-height:220px;white-space:pre-wrap;overflow:auto;padding:12px;background:rgba(255,255,255,0.01);border-radius:8px}
-  footer{margin-top:16px;color:#7fb5c9;font-size:13px}
-  .hint{font-size:13px;color:#8fbfd0}
+  .btn{background:linear-gradient(90deg,#00e6ff,#b86bff);color:#071824;padding:8px 12px;border-radius:20px;border:none;cursor:pointer}
+  .small{padding:8px 10px;border-radius:8px;background:#0b2028;color:#9ad9ea;border:1px solid rgba(255,255,255,0.02);cursor:pointer}
+  .log{font-size:13px;color:#9ad9ea;white-space:pre-wrap;min-height:220px;padding:10px;background:rgba(255,255,255,0.01);border-radius:8px}
 </style>
 </head>
 <body>
 <div class="wrap">
-  <h1>Passport Size Pic Generator — Advanced</h1>
-
+  <h1>Passport Generator — Final</h1>
   <div class="grid">
-    <div>
-      <div class="panel">
-        <div style="display:flex;justify-content:space-between;align-items:center">
-          <div>
-            <div style="font-weight:700;color:#bff6ff">Upload a portrait</div>
-            <div class="hint">ResNet50 model will run in-browser (more accurate). Background removal → feather → despill → composite.</div>
-          </div>
-          <div class="uploader">
-            <input id="fileInput" type="file" accept="image/*">
-            <button id="autoProcess" class="btn">Auto Process</button>
-          </div>
+    <div class="panel">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div><strong style="color:#bff6ff">Upload portrait</strong><div style="color:#9ad9ea;font-size:13px">ResNet50 + refined mask → despill → export</div></div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <input id="fileInput" type="file" accept="image/*">
+          <button id="autoBtn" class="btn">Auto Process</button>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:16px;margin-top:12px;flex-wrap:wrap">
+        <div style="flex-basis:360px">
+          <canvas id="preview" width="360" height="456"></canvas>
+          <div style="color:#9ad9ea;font-size:13px;margin-top:6px">Preview (450×570 export)</div>
         </div>
 
-        <div style="margin-top:12px;display:flex;gap:18px;align-items:flex-start;flex-wrap:wrap">
-          <div>
-            <canvas id="preview" width="360" height="456"></canvas>
-            <div style="margin-top:8px;color:#9ad9ea;font-size:13px">Preview (export 450×570 px)</div>
+        <div style="flex:1;min-width:260px">
+          <div class="row"><label>Background</label>
+            <select id="bgSelect"><option value="preset">Match sample blue</option><option value="white">White</option><option value="custom">Custom</option></select>
+            <input id="bgColor" type="color" value="#5d8fe0" style="display:none">
           </div>
 
-          <div style="min-width:260px;flex:1">
-            <div class="controls">
-              <div class="row">
-                <label>Background</label>
-                <select id="bgSelect">
-                  <option value="preset">Match sample blue</option>
-                  <option value="white">White</option>
-                  <option value="custom">Custom</option>
-                </select>
-                <input id="bgColor" type="color" value="#5d8fe0" style="display:none">
-              </div>
+          <div class="row"><label>Brightness</label><input id="brightness" type="range" min="-80" max="80" value="10"><div id="bVal">+10</div></div>
+          <div class="row"><label>Contrast</label><input id="contrast" type="range" min="-80" max="80" value="6"><div id="cVal">+6</div></div>
+          <div class="row"><label>Sharpen</label><input id="sharpen" type="range" min="0" max="3" step="0.25" value="1"><div id="sVal">1.0</div></div>
+          <div class="row"><label>Feather</label><input id="feather" type="range" min="0" max="30" value="10"><div id="fVal">10px</div></div>
 
-              <div class="row">
-                <label>Brightness</label>
-                <input id="brightness" type="range" min="-80" max="80" value="10">
-                <div id="bVal" style="width:40px;text-align:right">+10</div>
-              </div>
-
-              <div class="row">
-                <label>Contrast</label>
-                <input id="contrast" type="range" min="-80" max="80" value="6">
-                <div id="cVal" style="width:40px;text-align:right">+6</div>
-              </div>
-
-              <div class="row">
-                <label>Sharpen</label>
-                <input id="sharpen" type="range" min="0" max="3" step="0.25" value="1">
-                <div id="sVal" style="width:40px;text-align:right">1.0</div>
-              </div>
-
-              <div class="row">
-                <label>Feather (edge)</label>
-                <input id="feather" type="range" min="0" max="20" value="8">
-                <div id="fVal" style="width:40px;text-align:right">8px</div>
-              </div>
-
-              <div class="actions">
-                <button id="applyBtn" class="btn">Apply & Generate</button>
-                <button id="dlPng" class="small">Download PNG (450×570)</button>
-                <button id="dlJpg" class="small">Download JPG</button>
-                <button id="dlPsd" class="small">Download PSD (single-layer)</button>
-                <button id="resetBtn" class="small">Reset</button>
-              </div>
-
-              <div class="hint" style="margin-top:6px">Export: 1.5 × 1.9 in @ 300 DPI = 450 × 570 px. ResNet50 is heavier but gives better masks — please be patient while model loads.</div>
-            </div>
+          <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
+            <button id="applyBtn" class="btn">Apply & Generate</button>
+            <button id="dlPng" class="small">Download PNG</button>
+            <button id="dlJpg" class="small">Download JPG</button>
+            <button id="dlPsd" class="small">Download PSD</button>
+            <button id="reset" class="small">Reset</button>
           </div>
+
+          <div style="margin-top:8px;color:#9ad9ea;font-size:13px">Export: 1.5 × 1.9 in @300 DPI → 450×570 px</div>
         </div>
       </div>
     </div>
 
-    <div class="right">
-      <div class="panel">
-        <strong style="color:#bff6ff">Preview / Logs</strong>
-        <div id="log" class="log">Loading BodyPix ResNet50 model...</div>
-      </div>
-
+    <div>
+      <div class="panel"><strong style="color:#bff6ff">Preview / Logs</strong><div id="log" class="log">Loading BodyPix ResNet50...</div></div>
       <div style="height:12px"></div>
-
-      <div class="panel">
-        <strong style="color:#bff6ff">How it works</strong>
+      <div class="panel"><strong style="color:#bff6ff">Notes</strong>
         <ol style="color:#9ad9ea">
-          <li>Load BodyPix ResNet50 in browser (high accuracy)</li>
-          <li>Segment person → refine mask (erode/dilate trick) → blur (feather)</li>
-          <li>Composite on blue → despill (remove blue fringe) → apply filters → crop → export</li>
+          <li>High accuracy but slower on low-end devices (ResNet50).</li>
+          <li>If hair-strands still need perfection, server-side matting (remove.bg/SAM+matting) is next step.</li>
         </ol>
       </div>
     </div>
   </div>
-
-  <footer>Client-only solution. For production-grade layered PSD & perfect hair, server-side matting is recommended (I can implement that too).</footer>
 </div>
 
 <!-- libs -->
@@ -141,58 +87,41 @@
 
 <script>
 (async function(){
-  // DOM refs
-  const fileInput = id('fileInput'), autoProcess = id('autoProcess');
-  const preview = id('preview'), ctx = preview.getContext('2d');
-  const applyBtn = id('applyBtn'), resetBtn = id('resetBtn');
-  const dlPng = id('dlPng'), dlJpg = id('dlJpg'), dlPsd = id('dlPsd');
-  const bgSelect = id('bgSelect'), bgColor = id('bgColor');
-  const brightness = id('brightness'), contrast = id('contrast'), sharpen = id('sharpen');
-  const feather = id('feather');
-  const bVal = id('bVal'), cVal = id('cVal'), sVal = id('sVal'), fVal = id('fVal');
-  const logEl = id('log');
+  const fileInput = document.getElementById('fileInput');
+  const autoBtn = document.getElementById('autoBtn');
+  const preview = document.getElementById('preview'), ctx = preview.getContext('2d');
+  const applyBtn = document.getElementById('applyBtn'), dlPng = document.getElementById('dlPng'), dlJpg = document.getElementById('dlJpg'), dlPsd = document.getElementById('dlPsd');
+  const resetBtn = document.getElementById('reset');
+  const bgSelect = document.getElementById('bgSelect'), bgColor = document.getElementById('bgColor');
+  const brightness = document.getElementById('brightness'), contrast = document.getElementById('contrast'), sharpen = document.getElementById('sharpen'), feather = document.getElementById('feather');
+  const bVal = document.getElementById('bVal'), cVal = document.getElementById('cVal'), sVal = document.getElementById('sVal'), fVal = document.getElementById('fVal');
+  const logEl = document.getElementById('log');
 
-  function log(...t){ logEl.textContent += t.join(' ') + "\\n"; logEl.scrollTop = 9999; }
+  function log(...t){ logEl.textContent += t.join(' ') + "\n"; logEl.scrollTop = 9999; }
 
   const EXPORT_W = 450, EXPORT_H = 570;
-  let originalImage = null;
-  let bodyPixNet = null;
-  let latestCanvas = null;
+  let originalImage = null, bodyPixNet = null, latestCanvas = null;
 
-  // load ResNet50 BodyPix for higher accuracy
-  log('Loading BodyPix (ResNet50) — this may take 5–20 seconds depending on connection...');
+  log('Loading BodyPix ResNet50 (may take a while)...');
   try{
-    bodyPixNet = await bodyPix.load({
-      architecture: 'ResNet50',
-      outputStride: 16,
-      quantBytes: 2 // reduce weight slightly; change to 1 for smaller but lower precision
-    });
+    bodyPixNet = await bodyPix.load({ architecture:'ResNet50', outputStride:16, quantBytes:2 });
     log('BodyPix ResNet50 loaded.');
   }catch(e){
-    log('Model load failed:', e.message || e);
+    log('Model load failed: ' + (e.message||e));
     bodyPixNet = null;
   }
 
-  // UI events
-  fileInput.addEventListener('change', async (e) => {
-    const f = e.target.files[0];
-    if(!f) return;
+  fileInput.addEventListener('change', (e)=>{
+    const f = e.target.files[0]; if(!f) return;
     const url = URL.createObjectURL(f);
     const img = new Image();
-    img.onload = () => {
-      originalImage = img;
-      drawPreviewScaled(img);
-      URL.revokeObjectURL(url);
-      log('Image loaded: ' + img.width + '×' + img.height);
-    };
+    img.onload = ()=>{ originalImage = img; drawPreviewScaled(img); URL.revokeObjectURL(url); log('Image loaded: ' + img.width + '×' + img.height); };
     img.src = url;
   });
 
-  autoProcess.addEventListener('click', ()=> applyAndProcess());
+  autoBtn.addEventListener('click', ()=> applyAndProcess());
   applyBtn.addEventListener('click', ()=> applyAndProcess());
-  resetBtn.addEventListener('click', ()=> {
-    originalImage = null; ctx.clearRect(0,0,preview.width,preview.height); fileInput.value=''; log('Reset.');
-  });
+  resetBtn.addEventListener('click', ()=> { originalImage=null; ctx.clearRect(0,0,preview.width,preview.height); fileInput.value=''; log('Reset.'); });
 
   bgSelect.addEventListener('change', ()=> { bgColor.style.display = bgSelect.value === 'custom' ? 'inline-block' : 'none'; });
   brightness.addEventListener('input', ()=> bVal.textContent = (brightness.value>0?'+':'')+brightness.value);
@@ -210,17 +139,15 @@
   });
   dlPsd.addEventListener('click', ()=> {
     if(!latestCanvas) return alert('Generate first.');
-    try {
+    try{
       const ab = createPsdFromCanvas(latestCanvas);
       const blob = new Blob([ab], {type:'application/octet-stream'});
       saveAs(blob,'passport.psd');
-    } catch(err) {
-      log('PSD export failed:', err.message || err);
-      alert('PSD export failed in this browser. I can add server-side PSD builder if needed.');
+    }catch(err){
+      log('PSD export failed: ' + (err.message||err)); alert('PSD export failed in this browser.');
     }
   });
 
-  // draw scaled preview on upload
   function drawPreviewScaled(img){
     const maxW = 360, maxH = 456;
     let w = img.width, h = img.height;
@@ -228,138 +155,138 @@
     const dw = Math.round(w*ratio), dh = Math.round(h*ratio);
     preview.width = dw; preview.height = dh;
     ctx.clearRect(0,0,dw,dh);
-    ctx.drawImage(img, 0,0,w,h, 0,0, dw,dh);
+    ctx.drawImage(img, 0,0,w,h, 0,0,dw,dh);
   }
 
-  // helper: hex->rgb
-  function hexToRgb(hex){
-    hex = hex.replace('#','');
-    if(hex.length===3) hex = hex.split('').map(s=>s+s).join('');
-    return { r: parseInt(hex.substring(0,2),16), g: parseInt(hex.substring(2,4),16), b: parseInt(hex.substring(4,6),16) };
-  }
+  function chosenBgColor(){ if(bgSelect.value==='preset') return '#5d8fe0'; if(bgSelect.value==='white') return '#ffffff'; return bgColor.value || '#5d8fe0'; }
 
-  function chosenBgColor(){
-    if(bgSelect.value === 'preset') return '#5d8fe0';
-    if(bgSelect.value === 'white') return '#ffffff';
-    return bgColor.value || '#5d8fe0';
-  }
-
-  // despill: reduce background-color spill (simple heuristic)
-  function despill(canvas, bgHex='#5d8fe0', strength=0.7){
-    const ctxLocal = canvas.getContext('2d');
-    const img = ctxLocal.getImageData(0,0,canvas.width,canvas.height);
-    const data = img.data;
+  // despill - stronger
+  function despill(canvas, bgHex='#5d8fe0', strength=0.9){
+    const ctxL = canvas.getContext('2d');
+    const img = ctxL.getImageData(0,0,canvas.width,canvas.height);
+    const d = img.data;
     const bg = hexToRgb(bgHex);
-    for(let i=0;i<data.length;i+=4){
-      const r = data[i], g = data[i+1], b = data[i+2];
-      // detect bluish fringe: blue significantly higher than red/green
-      if (b > r + 18 && b > g + 18) {
-        // compute how much to reduce blue based on difference and strength
+    for(let i=0;i<d.length;i+=4){
+      const r=d[i], g=d[i+1], b=d[i+2];
+      // bluish fringe detection
+      if(b > r + 15 && b > g + 15){
         const diff = Math.min(255, b - Math.max(r,g));
-        const reduce = Math.round(diff * strength * 0.9);
-        data[i+2] = clamp(b - reduce);
-        // optionally boost r/g slightly for natural look
-        data[i] = clamp(r + Math.round(reduce * 0.12));
-        data[i+1] = clamp(g + Math.round(reduce * 0.06));
+        const reduce = Math.round(diff * strength);
+        d[i+2] = clamp(b - reduce);
+        d[i] = clamp(r + Math.round(reduce * 0.08));
+        d[i+1] = clamp(g + Math.round(reduce * 0.04));
       }
     }
-    ctxLocal.putImageData(img,0,0);
+    ctxL.putImageData(img,0,0);
   }
+  function hexToRgb(hex){ hex = hex.replace('#',''); if(hex.length===3) hex = hex.split('').map(c=>c+c).join(''); return { r:parseInt(hex.slice(0,2),16), g:parseInt(hex.slice(2,4),16), b:parseInt(hex.slice(4,6),16) }; }
+  function clamp(v){ return Math.max(0, Math.min(255, Math.round(v))); }
 
-  // main function
+  // core processing
   async function applyAndProcess(){
-    if(!originalImage) return alert('Please upload a photo first.');
+    if(!originalImage) return alert('Please upload a photo.');
     log('Processing started...');
-    // working canvas resolution (limit)
     const workW = Math.min(originalImage.width, 1400);
     const workH = Math.round(originalImage.height * (workW / originalImage.width));
     const work = document.createElement('canvas'); work.width = workW; work.height = workH;
-    const wctx = work.getContext('2d');
-    wctx.drawImage(originalImage, 0,0, workW, workH);
+    const wctx = work.getContext('2d'); wctx.drawImage(originalImage,0,0,workW,workH);
 
-    // composite canvas
+    // prepare comp canvas filled with bg (ensures bg always present)
     const comp = document.createElement('canvas'); comp.width = workW; comp.height = workH;
     const cctx = comp.getContext('2d');
+    cctx.fillStyle = chosenBgColor(); cctx.fillRect(0,0,comp.width,comp.height);
 
     if(!bodyPixNet){
-      log('No segmentation model; skipping background removal.');
-      cctx.fillStyle = chosenBgColor(); cctx.fillRect(0,0,comp.width,comp.height);
-      cctx.drawImage(work, 0,0);
+      log('No model loaded — skipping removal.');
+      cctx.drawImage(work,0,0);
     } else {
-      log('Running segmentation (ResNet50) — this may take a few seconds...');
-      const seg = await bodyPixNet.segmentPerson(work, {
-        internalResolution: 'high',
-        segmentationThreshold: 0.7,
-        scoreThreshold: 0.3
-      });
+      log('Running segmentation...');
+      const seg = await bodyPixNet.segmentPerson(work, { internalResolution:'high', segmentationThreshold:0.7, scoreThreshold:0.3 });
       log('Segmentation done.');
 
-      // raw mask -> maskCanvas
+      // raw mask from BodyPix (alpha 255 for person)
       const rawMask = bodyPix.toMask(seg, {r:255,g:255,b:255,a:255}, {r:0,g:0,b:0,a:0});
       const maskCanvas = document.createElement('canvas'); maskCanvas.width = workW; maskCanvas.height = workH;
       const mctx = maskCanvas.getContext('2d');
-      mctx.putImageData(rawMask, 0,0);
+      mctx.putImageData(rawMask,0,0);
 
-      // refine mask: small erode (downscale/upscale trick) to remove speckles
-      const erodeFactor = Math.max(1, Math.round((feather.value/12) + 1)); // tweak
-      if(erodeFactor > 1){
-        const tmp = document.createElement('canvas'); tmp.width = Math.max(1,Math.floor(workW/erodeFactor)); tmp.height = Math.max(1,Math.floor(workH/erodeFactor));
+      // Erode-like step: downscale/upscale to remove small speckles
+      const erodeScale = Math.max(1, Math.round((feather.value/12) + 1));
+      if(erodeScale > 1){
+        const tmp = document.createElement('canvas'); tmp.width = Math.max(1,Math.floor(workW/erodeScale)); tmp.height = Math.max(1,Math.floor(workH/erodeScale));
         tmp.getContext('2d').drawImage(maskCanvas,0,0,tmp.width,tmp.height);
         mctx.clearRect(0,0,maskCanvas.width,maskCanvas.height);
-        mctx.drawImage(tmp,0,0,tmp.width,tmp.height, 0,0, maskCanvas.width, maskCanvas.height);
+        mctx.drawImage(tmp,0,0,tmp.width,tmp.height,0,0,maskCanvas.width,maskCanvas.height);
       }
 
-      // blur mask (feather)
-      const blurPx = Number(feather.value) || 8;
+      // Gaussian-like blur using canvas filter (feather)
+      const blurPx = Number(feather.value) || 10;
       if('filter' in mctx){
         const tmp2 = document.createElement('canvas'); tmp2.width = maskCanvas.width; tmp2.height = maskCanvas.height;
         const tctx = tmp2.getContext('2d');
-        tctx.putImageData(mctx.getImageData(0,0,maskCanvas.width,maskCanvas.height), 0, 0);
+        tctx.putImageData(mctx.getImageData(0,0,maskCanvas.width,maskCanvas.height),0,0);
         tctx.filter = `blur(${blurPx}px)`;
-        tctx.drawImage(tmp2, 0, 0);
+        tctx.drawImage(tmp2,0,0);
         mctx.clearRect(0,0,maskCanvas.width,maskCanvas.height);
-        mctx.drawImage(tmp2, 0, 0);
+        mctx.drawImage(tmp2,0,0);
       } else {
-        // fallback: tiny downscale/upscale trick
         const tmp2 = document.createElement('canvas'); tmp2.width = Math.max(1,Math.floor(maskCanvas.width/4)); tmp2.height = Math.max(1,Math.floor(maskCanvas.height/4));
         tmp2.getContext('2d').drawImage(maskCanvas,0,0,tmp2.width,tmp2.height);
         mctx.clearRect(0,0,maskCanvas.width,maskCanvas.height);
-        mctx.drawImage(tmp2,0,0,tmp2.width,tmp2.height, 0,0,maskCanvas.width, maskCanvas.height);
+        mctx.drawImage(tmp2,0,0,tmp2.width,tmp2.height,0,0,maskCanvas.width,maskCanvas.height);
       }
 
-      // Create person canvas via destination-in (keeps alpha)
+      // --- Create person RGBA using mask alpha (avoids white fringe) ---
+      const src = wctx.getImageData(0,0,workW,workH);
+      const maskData = mctx.getImageData(0,0,workW,workH);
+      const personImage = new ImageData(workW, workH);
+      for(let i=0;i<src.data.length;i+=4){
+        const alpha = maskData.data[i+3]; // 0..255
+        // copy RGB, set alpha = mask alpha
+        personImage.data[i+0] = src.data[i+0];
+        personImage.data[i+1] = src.data[i+1];
+        personImage.data[i+2] = src.data[i+2];
+        personImage.data[i+3] = alpha;
+      }
+      // put into personCanvas
       const personCanvas = document.createElement('canvas'); personCanvas.width = workW; personCanvas.height = workH;
       const pctx = personCanvas.getContext('2d');
-      pctx.drawImage(work, 0,0);
-      pctx.globalCompositeOperation = 'destination-in';
-      pctx.drawImage(maskCanvas, 0,0);
+      pctx.putImageData(personImage, 0, 0);
+
+      // optionally slightly expand person to reduce tiny transparent gaps: draw person at 1px offset four times with low alpha
+      // This acts like dilation of the opaque region without altering interior
       pctx.globalCompositeOperation = 'source-over';
+      pctx.globalAlpha = 0.96;
+      pctx.drawImage(personCanvas, -1, 0);
+      pctx.drawImage(personCanvas, 1, 0);
+      pctx.drawImage(personCanvas, 0, -1);
+      pctx.drawImage(personCanvas, 0, 1);
+      pctx.globalAlpha = 1.0;
 
-      // composite over chosen background
-      cctx.fillStyle = chosenBgColor(); cctx.fillRect(0,0,comp.width,comp.height);
-      cctx.drawImage(personCanvas, 0,0);
+      // draw person onto comp (bg already filled)
+      cctx.drawImage(personCanvas, 0, 0);
 
-      // despill to reduce blue halo
-      despill(comp, chosenBgColor(), 0.8);
+      // despill to reduce blue halo on the composite
+      despill(comp, chosenBgColor(), 0.92);
     }
 
-    // apply bright/contrast/sharpen on comp
+    // Apply brightness/contrast/sharpen on comp
     applyFiltersToCanvas(comp, Number(brightness.value), Number(contrast.value), Number(sharpen.value));
 
-    // passport crop and resize to EXPORT_W x EXPORT_H
-    const targetRatio = EXPORT_W / EXPORT_H;
+    // Passport crop (center) and resize to EXPORT
+    const ratio = EXPORT_W / EXPORT_H;
     let sx = 0, sy = 0, sw = comp.width, sh = comp.height;
-    if(comp.width / comp.height > targetRatio){
-      sw = Math.round(comp.height * targetRatio); sx = Math.round((comp.width - sw)/2);
+    if(comp.width / comp.height > ratio){
+      sw = Math.round(comp.height * ratio); sx = Math.round((comp.width - sw)/2);
     } else {
-      sh = Math.round(comp.width / targetRatio); sy = Math.round((comp.height - sh)/2);
+      sh = Math.round(comp.width / ratio); sy = Math.round((comp.height - sh)/2);
     }
     const final = document.createElement('canvas'); final.width = EXPORT_W; final.height = EXPORT_H;
     const fctx = final.getContext('2d');
     fctx.fillStyle = chosenBgColor(); fctx.fillRect(0,0,final.width,final.height);
     fctx.drawImage(comp, sx,sy, sw,sh, 0,0, final.width, final.height);
 
-    // preview scaled
+    // show preview scaled
     preview.width = Math.min(420, final.width); preview.height = Math.round(preview.width * final.height / final.width);
     ctx.clearRect(0,0,preview.width,preview.height);
     ctx.drawImage(final, 0,0, final.width, final.height, 0,0, preview.width, preview.height);
@@ -368,7 +295,6 @@
     log('Processing complete — export ready at ' + EXPORT_W + '×' + EXPORT_H + ' px.');
   }
 
-  // image filters: brightness (add), contrast (scale), sharpen (convolution)
   function applyFiltersToCanvas(canvas, bright=0, contrastVal=0, sharpenAmt=0){
     const ctxL = canvas.getContext('2d');
     let img = ctxL.getImageData(0,0,canvas.width,canvas.height);
@@ -382,7 +308,6 @@
       data[i+2] = clamp( contrastFactor * (clamp(data[i+2] + b) - 128) + 128 );
     }
     ctxL.putImageData(img,0,0);
-
     if(sharpenAmt > 0.01){
       const w = canvas.width, h = canvas.height;
       const src = ctxL.getImageData(0,0,w,h);
@@ -413,10 +338,6 @@
     }
   }
 
-  function clamp(v){ return Math.max(0, Math.min(255, Math.round(v))); }
-  function id(i){ return document.getElementById(i); }
-
-  // create PSD (single flattened layer) using ag-psd (canvas)
   function createPsdFromCanvas(canvas){
     const ag = window['agPsd'];
     if(!ag || !ag.encodePsd) throw new Error('ag-psd not available');
@@ -425,9 +346,10 @@
     return ag.encodePsd(psd);
   }
 
-  // saveAs
   function saveAs(blob, name){ try{ window.saveAs(blob, name); }catch(e){ const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=name; a.click(); URL.revokeObjectURL(a.href); } }
 
+  // helpers
+  function hexToRgb(hex){ hex = hex.replace('#',''); if(hex.length===3) hex = hex.split('').map(c=>c+c).join(''); return { r:parseInt(hex.slice(0,2),16), g:parseInt(hex.slice(2,4),16), b:parseInt(hex.slice(4,6),16) }; }
 })();
 </script>
 </body>
