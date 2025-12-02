@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>PixelKit — PhotoTools</title>
 
-<!-- Performance: preconnect + fonts (display=swap helps avoid FOIT) -->
+<!-- Performance: preconnect + fonts -->
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@300;400&display=swap" rel="stylesheet">
 
@@ -13,9 +13,9 @@
   :root{
     --bg:#020617;
     --panel: rgba(255,255,255,0.035);
-    --muted:#cbe8f7;            /* slightly lighter for readability */
+    --muted:#cbe8f7;
     --neon-cyan:#00f0ff;
-    --neon-mag:#d39bff;        /* slightly lighter magenta for contrast */
+    --neon-mag:#d39bff;
     --radius:12px;
     --container:1150px;
     --tile-icon-bg: linear-gradient(135deg, rgba(0,240,255,0.12), rgba(195,130,252,0.08));
@@ -36,13 +36,13 @@
   .logo{width:64px;height:64px;border-radius:12px;background:linear-gradient(135deg,var(--neon-cyan),var(--neon-mag));display:flex;align-items:center;justify-content:center;font-family:Orbitron;color:#00141a;font-weight:700}
   nav a{color:var(--muted);text-decoration:none;margin-left:10px;padding:8px;border-radius:8px}
 
-  /* hero CTA */
+/* hero CTA */
   .hero-cta { margin-top:14px; display:flex;justify-content:center }
   .hero-cta .cta-btn {
     padding:14px 28px;border-radius:999px;border:0;background:linear-gradient(90deg,var(--neon-cyan),var(--neon-mag));color:#00141a;font-weight:800;cursor:pointer;box-shadow: 0 14px 40px rgba(0,120,140,0.14), 0 4px 14px rgba(0,0,0,0.45);
   }
 
-  /* Home tiles */
+/* Home tiles */
   .home{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:18px;margin-top:28px}
   .tile{
     position:relative;
@@ -61,7 +61,7 @@
   }
   .tile:focus{ outline: none; box-shadow: 0 14px 40px rgba(0,0,0,0.7), 0 0 20px rgba(0,240,255,0.06); transform: translateY(-6px) scale(1.01); }
   .tile:hover{ transform: translateY(-6px) scale(1.01); box-shadow: 0 18px 40px rgba(0,0,0,0.7); }
-  /* consistent icon circle */
+/* consistent icon circle */
   .tile .icon {
     width:56px;height:56px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;
     background:var(--tile-icon-bg); border:1px solid rgba(255,255,255,0.03);
@@ -70,7 +70,7 @@
   .tile h3{margin:6px 0;color:var(--neon-cyan);font-family:Orbitron;font-size:15px}
   .tile p{color:var(--muted);font-size:13px;margin:0;line-height:1.25}
 
-  /* subtle neon border (tuned) */
+/* subtle neon border */
   .tile::before{
     content:"";
     position:absolute; inset:0;
@@ -84,7 +84,7 @@
   }
   .tile:hover::before{ opacity:0.75; filter: drop-shadow(0 0 12px rgba(0,240,255,0.12)); }
 
-  /* Tool page container */
+/* Tool page container */
   .tool-page{
     display:none;
     margin-top:24px;
@@ -149,14 +149,14 @@
     cursor:pointer;
   }
 
-  /* 500x500 previews */
+/* 500x500 previews */
   .res500-wrap{display:flex;gap:18px;align-items:flex-start;flex-wrap:wrap}
   .controls{flex:1;min-width:300px}
   .preview-box{width:520px;display:flex;flex-direction:column;gap:10px;align-items:center}
   .canvas-frame{width:500px;height:500px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:#071226;display:flex;align-items:center;justify-content:center;overflow:hidden;box-shadow:0 8px 28px rgba(0,0,0,0.6)}
   .meta{color:var(--muted);font-size:13px}
 
-  /* Link Shuffle specific styling integrated with theme */
+/* Link Shuffle specific styling integrated with theme */
   .shuffle-container { max-width:980px;margin:0 auto; }
   .shuffle-card {
     background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
@@ -196,7 +196,7 @@
     font-weight: 600;
   }
 
-  /* 2048x1152 resizer tweaks (kept) */
+/* 2048x1152 resizer tweaks */
   #resizer2048 { padding: 28px; border-radius: 14px; background: linear-gradient(180deg, rgba(255,255,255,0.014), rgba(255,255,255,0.01)); border: 1px solid rgba(0,255,255,0.06); box-shadow: 0 10px 40px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.012); position: relative; }
   #resizer2048 .panel { border-radius: 12px; padding: 18px; margin-top: 12px; background: linear-gradient(180deg, rgba(0,0,0,0.18), rgba(255,255,255,0.01)); border: 1px solid rgba(255,255,255,0.03); box-shadow: 0 8px 24px rgba(0,0,0,0.6), 0 0 30px rgba(0,240,255,0.02); }
   #resizer2048 .row { display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-top:12px; }
@@ -214,7 +214,7 @@
   @media(max-width:1100px){ .preview-box{width:100%;order:2} .controls{order:1} .res500-wrap{flex-direction:column} }
   @media(max-width:900px){.home{grid-template-columns:repeat(2,1fr)} .preview-wrap{flex-direction:column}}
 
-  /* refined footer to match the example look + improved spacing and hover */
+/* refined footer to match the example look + improved spacing and hover */
   .site-footer{
     width:100%;
     background:#0b0e15;
@@ -227,7 +227,8 @@
   }
   .site-footer .footer-inner{ max-width:var(--container); margin:0 auto; display:flex; align-items:center; justify-content:space-between; gap:18px; }
   .site-footer .footer-left{ display:flex; flex-direction:column; }
-  .site-footer .footer-brand{ font-family:Orbitron; color:var(--neon-cyan); font-size:56px; line-height:1; letter-spacing:2px; }
+  .site-footer .footer-brand{ font-family:Orbitron; color:var(--neon-cyan); font-size:56px; line-height:1; letter-spacing:2px; display:flex;align-items:center;gap:12px }
+  .site-footer .footer-logo{ width:48px;height:48px;border-radius:10px;background:linear-gradient(135deg,var(--neon-cyan),var(--neon-mag)); display:inline-flex;align-items:center;justify-content:center;font-family:Orbitron;color:#00141a;font-weight:700 }
   .site-footer .footer-copy{ color:#8fa3c2; font-size:13px; margin-top:6px }
 
   .site-footer .footer-nav{ display:flex; gap:28px; align-items:center; justify-content:center; flex:1; }
@@ -250,15 +251,54 @@
   .site-footer .social{ display:inline-flex; width:34px; height:34px; align-items:center; justify-content:center; border-radius:50%; background:transparent; border:1px solid rgba(255,255,255,0.04); color:#9fb0c8; text-decoration:none; font-weight:700; transition: all .12s ease; }
   .site-footer .social:hover{ background:rgba(0,240,255,0.06); color:var(--neon-cyan); border-color:rgba(0,240,255,0.12); transform: translateY(-2px) }
 
-  @media(max-width:980px){
-    .site-footer .footer-inner{ flex-direction:column; align-items:center; text-align:center }
-    .site-footer .footer-brand{ font-size:42px }
-    .site-footer .footer-nav{ order:3; margin-top:12px }
-    .site-footer .footer-right{ order:2; margin-top:8px }
-  }
-  @media(max-width:520px){ .site-footer .footer-brand{ font-size:30px } }
+/* Footer modal/panel for pages */
+  .doc-panel{ position:fixed; right:20px; bottom:20px; width:420px; max-width:calc(100% - 40px); background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border-radius:12px; padding:18px; box-shadow: 0 16px 50px rgba(0,0,0,0.6); border:1px solid rgba(255,255,255,0.03); display:none; z-index:1200 }
+  .doc-panel.active{ display:block }
+  .doc-panel h3{ margin:0 0 8px 0; font-family:Orbitron; color:var(--neon-cyan) }
+  .doc-panel .doc-content{ color:var(--muted); font-size:14px; line-height:1.5 }
+  .doc-panel .close-doc{ position:absolute; right:8px; top:8px; background:transparent;border:0;color:var(--muted);cursor:pointer }
 
-  /* focus ring for interactive buttons/tiles for keyboard users */
+/* --------------------------
+   FIXES: footer alignment improvements
+   (ensures About / Contact / Terms / Privacy align vertically centered)
+   -------------------------- */
+  .site-footer .footer-inner {
+    display: flex;
+    align-items: center;        /* vertical center everything */
+    justify-content: space-between;
+    gap: 18px;
+  }
+  .site-footer .footer-left { 
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .site-footer .footer-nav {
+    display: flex;
+    align-items: center;     /* vertical center nav links */
+    gap: 28px;
+    flex: 1;
+    justify-content: center; /* keeps links centered between brand and socials */
+    white-space: nowrap;     /* avoid accidental wrapping */
+  }
+  .site-footer .footer-nav a {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 10px;      /* smaller vertical padding avoids offset */
+    line-height: 1;         
+  }
+  .site-footer .footer-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  @media (max-width: 980px) {
+    .site-footer .footer-inner { flex-direction: column; align-items: center; text-align:center; }
+    .site-footer .footer-nav { white-space: normal; gap:12px; flex-wrap:wrap; justify-content:center; }
+    .site-footer .footer-brand { font-size:42px; }
+  }
+
+/* focus ring for interactive buttons/tiles for keyboard users */
   .tile, button, .btn, .small-btn, .copy { outline-offset:3px; }
   .tile:focus-visible, button:focus-visible, .btn:focus-visible { box-shadow: 0 0 0 4px rgba(0,240,255,0.06), 0 16px 36px rgba(0,0,0,0.6); border-radius:12px; }
 
@@ -742,15 +782,21 @@ https://example.net/article
     <footer class="site-footer">
       <div class="footer-inner">
         <div class="footer-left">
-          <div class="footer-brand">PixelKit</div>
-          <div class="footer-copy">2025 © All Rights Reserved — PixelKit</div>
+          <div style="display:flex;align-items:center;gap:12px">
+            <div class="footer-logo">PK</div>
+            <div>
+              <div class="footer-brand">PixelKit</div>
+              <div class="footer-copy">2025 © All Rights Reserved — PixelKit</div>
+            </div>
+          </div>
+          <div style="margin-top:8px;color:var(--muted);font-size:13px">Email: <a href="mailto:litonshakh5@gmail.com" style="color:var(--neon-cyan);text-decoration:none">litonshakh5@gmail.com</a></div>
         </div>
 
         <nav class="footer-nav" aria-label="Footer navigation">
-          <a href="#">About</a>
-          <a href="#">Contact</a>
-          <a href="#">Terms &amp; Conditions</a>
-          <a href="#">Privacy &amp; Policy</a>
+          <a href="#" onclick="openDoc('about');return false;">About</a>
+          <a href="#" onclick="openDoc('contact');return false;">Contact</a>
+          <a href="#" onclick="openDoc('terms');return false;">Terms &amp; Conditions</a>
+          <a href="#" onclick="openDoc('privacy');return false;">Privacy &amp; Policy</a>
         </nav>
 
         <div class="footer-right">
@@ -762,10 +808,17 @@ https://example.net/article
       </div>
     </footer>
 
+    <!-- Document panels for footer pages -->
+    <div id="docPanel" class="doc-panel" role="dialog" aria-modal="true" aria-hidden="true">
+      <button class="close-doc" aria-label="Close" onclick="closeDoc()">✕</button>
+      <h3 id="docTitle"></h3>
+      <div class="doc-content" id="docContent"></div>
+    </div>
+
   </div>
 
 <script>
-  /* --- Navigation & initial state (same as before) --- */
+  /* --- Navigation & initial state --- */
   function showHome(push = true){
     const home = document.getElementById('homeView');
     if (home) home.style.display = 'block';
@@ -838,7 +891,7 @@ https://example.net/article
     return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
   }
 
-  /* --- Image tools logic (kept) --- */
+  /* --- Image tools logic --- */
   let lastGeneratedUrl = null;
   function generateResized(){
     const file = document.getElementById('resizeFile').files[0];
@@ -1025,7 +1078,7 @@ https://example.net/article
   }
   function setUrlStatus(msg,isErr){ const el=document.getElementById('urlStatus'); el.textContent=msg||''; el.style.color=isErr?'#ff8b8b':'var(--muted)'; }
 
-  // 2048x1152 resizer (kept logic)
+  // 2048x1152 resizer
   const TARGET_W = 2048;
   const TARGET_H = 1152;
   let generatedBlobURL = null;
@@ -1096,7 +1149,7 @@ https://example.net/article
   function downloadGenerated(){ const dl=document.getElementById('download2048'); const url=dl.dataset.blobUrl; const filename=dl.dataset.filename||'photo-2048x1152.png'; if(!url){ alert('No generated image yet.'); return; } const a=document.createElement('a'); a.href=url; a.download=filename; document.body.appendChild(a); a.click(); a.remove(); setStatus2048('Downloaded'); }
   function setStatus2048(msg,isErr){ const el=document.getElementById('status2048'); el.textContent=msg||''; el.style.color=isErr?'#ff8b8b':'var(--muted)'; }
 
-  // 500x500 interactive resizer (kept)
+  // 500x500 interactive resizer
   (function(){
     const fileInput = document.getElementById('file500');
     const canvas = document.getElementById('canvas500');
@@ -1316,7 +1369,7 @@ https://example.net/article
     document.getElementById('descInput').value=''; document.getElementById('descOutput').value=''; document.getElementById('charLimit').value=160; document.getElementById('shortMode').value='word'; document.getElementById('addEllipsis').checked=true; document.getElementById('descStatus').textContent='';
   }
 
-  // Link Shuffle logic (unchanged)
+  // Link Shuffle logic
   (function(){
     const input = document.getElementById('inputLinks');
     const output = document.getElementById('outputLinks');
@@ -1389,7 +1442,7 @@ https://example.net/article
     updateCharCount();
   })();
 
-  // small tile hover effect (kept but simpler transform)
+  // small tile hover effect
   (function(){
     const tiles = document.querySelectorAll('.tile');
     tiles.forEach(tile=>{
@@ -1419,7 +1472,56 @@ https://example.net/article
     }
   })();
 
+  /* Footer doc-panel logic */
+  function openDoc(name){
+    const panel = document.getElementById('docPanel');
+    const titleEl = document.getElementById('docTitle');
+    const contentEl = document.getElementById('docContent');
+    panel.classList.add('active'); panel.setAttribute('aria-hidden','false');
+
+    if(name === 'about'){
+      titleEl.textContent = 'About';
+      contentEl.innerHTML = `<p>About — PixelKit: আমরা দ্রুত, সুন্দর এবং ব্যবহারবান্ধ্য ইমেজ টুল প্রদান করি। আমাদের লক্ষ্য হচ্ছে সৃজনশীলদের জন্য সহজ, ওয়েব-বেসড সলিউশন তৈরি করা — কোভার মেকার, লোগো রিসাইজ, কনভার্টর এবং আরও অনেক।</p>`;
+    } else if(name === 'contact'){
+      titleEl.textContent = 'Contact';
+      contentEl.innerHTML = `<p>Contact (Professional):</p>
+        <ul>
+          <li>Email: <a href="mailto:litonshakh5@gmail.com">litonshakh5@gmail.com</a></li>
+          <li>Facebook: <a href="https://www.facebook.com/nbliton2/" target="_blank" rel="noopener">facebook.com/nbliton2</a></li>
+          <li>X: <a href="https://x.com/LitonShakh1" target="_blank" rel="noopener">@LitonShakh1</a></li>
+          <li>WhatsApp: <a href="https://wa.me/message/2KKCICT25LSYM1" target="_blank" rel="noopener">Message on WhatsApp</a></li>
+        </ul>
+        <p style="margin-top:10px">For business inquiries, please email us with a short summary of your project and we will get back promptly.</p>`;
+    } else if(name === 'terms'){
+      titleEl.textContent = 'Terms & Conditions';
+      contentEl.innerHTML = `<p><strong>Terms &amp; Conditions</strong></p>
+        <p>স্বাগত — PixelKit ব্যবহার করার পূর্বে অনুগ্রহ করে নিম্নলিখিত শর্তাবলী পড়ুন। এই সেবাটি ক্লায়েন্ট-সাইড ইমেজ প্রসেসিং সরঞ্জাম হিসেবে প্রদান করা হয়। ব্যবহারকারীর দ্বারা আপলোড করা ফাইল সম্পূর্ণরূপে ব্যবহারকারীর নিজস্ব দায়িত্ব।</p>
+        <p>১. কন্টেন্ট: আপনি নিশ্চিত করবেন যে আপলোড করা কোনো কন্টেন্ট কপিরাইট লঙ্ঘন করে না।<br>
+        ২. দায়-মুক্তি: PixelKit দ্বারা জেনারেটেড ছবি বা ফলাফল ব্যবহারে কোনো ধার্য ক্ষতির জন্য PixelKit দায়ী থাকবে না।<br>
+        ৩. সার্ভিস: আমরা jederzeit সেবা পরিবর্তন বা বন্ধ করার অধিকার রাখি।</p>
+        <p>এই শর্তাবলীর আরও বিস্তারিত তথ্য বা আইনি প্রশ্নের জন্য আমাদের ইমেল করুন।</p>`;
+    } else if(name === 'privacy'){
+      titleEl.textContent = 'Privacy & Policy';
+      contentEl.innerHTML = `<p><strong>Privacy &amp; Policy</strong></p>
+        <p>PixelKit আপনার ব্যক্তিগত তথ্যকে গুরুত্বসহকারে নেয়। আমাদের মূল নীতি: আমরা কোনো ব্যবহারকারীর ব্যক্তিগত ফাইল সার্ভারে সংরক্ষণ করি না — সব অপারেশন ক্লায়েন্ট-সাইড (আপনার ব্রাউজারে) সম্পন্ন হয়।</p>
+        <p>আপনি যে ইমেইল বা যোগাযোগ তথ্য সরবরাহ করবেন তা কেবল যোগাযোগের উদ্দেশ্যে ব্যবহার করা হবে। কোনো তৃতীয় পক্ষকে আপনার তথ্য বিক্রি করা হবে না।</p>
+        <p>আরও প্রশ্ন থাকলে, অনুগ্রহ করে <a href="mailto:litonshakh5@gmail.com">litonshakh5@gmail.com</a>-এ যোগাযোগ করুন।</p>`;
+    }
+  }
+  function closeDoc(){ const panel=document.getElementById('docPanel'); panel.classList.remove('active'); panel.setAttribute('aria-hidden','true'); }
+
+  // close panel when clicking outside
+  window.addEventListener('click', (e)=>{
+    const panel=document.getElementById('docPanel');
+    if(!panel.classList.contains('active')) return;
+    if(!panel.contains(e.target) && !e.target.closest('.site-footer')){ closeDoc(); }
+  });
+
+  // keyboard escape
+  window.addEventListener('keydown', (e)=>{ if(e.key === 'Escape'){ closeDoc(); } });
+
   /* Accessibility checklist (1-line): ensure all <img> have alt, interactive tiles have role/button + tabindex, keyboard Enter/Space triggers click, and color contrast checked for small text. */
+
 </script>
 </body>
 </html>
