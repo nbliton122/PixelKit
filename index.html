@@ -3,19 +3,10 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Passport Tools — Remove BG (manual download)</title>
+<title>Passport Tools — Multi-API Keys</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
 <style>
-  :root{
-    --bg:#06151a; --panel:#071824; --muted:#9ad9ea; --accent:#7fefff;
-    --btn-a-grad: linear-gradient(90deg,#00e6ff,#b86bff);
-    --btn-b-grad: linear-gradient(90deg,#6bd1ff,#7be0a9);
-    --download1: linear-gradient(90deg,#ff7ad6,#7a8bff);
-    --download2: linear-gradient(90deg,#5ce0ff,#00b3ff);
-    --download3: linear-gradient(90deg,#ffd16b,#ff7a7a);
-    --download4: linear-gradient(90deg,#a28bff,#6fe0ff);
-  }
-  html,body{height:100%}
+  :root{--bg:#06151a;--panel:#071824;--muted:#9ad9ea;--accent:#7fefff}
   body{font-family:Inter,system-ui,Arial;background:var(--bg);color:#d8fbff;margin:0;padding:22px}
   .wrap{max-width:1100px;margin:0 auto}
   h1{color:var(--accent);margin:0 0 16px;font-weight:700}
@@ -32,22 +23,17 @@
   .muted{color:var(--muted);font-size:13px}
   .big-buttons{display:flex;gap:12px;margin:10px 0 0}
   .big{padding:10px 14px;border-radius:28px;border:none;cursor:pointer;font-weight:700}
-  .big.remove{background:var(--btn-a-grad); color:#06151a}
-  .big.passport{background:var(--btn-b-grad); color:#06151a}
-
-  /* Download buttons styled colorful to match your design */
+  .big.remove{background:linear-gradient(90deg,#00e6ff,#b86bff); color:#06151a}
+  .big.passport{background:linear-gradient(90deg,#6bd1ff,#7be0a9); color:#06151a}
   .dl-row{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap}
   .dl{padding:10px 12px;border-radius:14px;border:none;color:#071824;cursor:pointer;font-weight:700}
-  .dl.png{background:var(--download1)}
-  .dl.jpg{background:var(--download2)}
-  .dl.psd{background:var(--download3)}
-  .dl.removed{background:var(--download4)}
-
+  .dl.png{background:linear-gradient(90deg,#ff7ad6,#7a8bff)}
+  .dl.jpg{background:linear-gradient(90deg,#5ce0ff,#00b3ff)}
+  .dl.psd{background:linear-gradient(90deg,#ffd16b,#ff7a7a)}
+  .dl.removed{background:linear-gradient(90deg,#a28bff,#6fe0ff)}
   .small{padding:8px 10px;border-radius:8px;background:#0b2b34;color:var(--muted);border:1px solid rgba(255,255,255,0.03);cursor:pointer}
   .hint{color:var(--muted);font-size:13px}
-
   .disabled{opacity:0.6;pointer-events:none}
-
   .overlay{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(2,10,14,0.6);z-index:9999;visibility:hidden;opacity:0;transition:opacity .18s,visibility .18s}
   .overlay.show{visibility:visible;opacity:1}
   .box{background:linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));padding:18px;border-radius:12px;display:flex;gap:14px;align-items:center;box-shadow:0 10px 40px rgba(0,0,0,0.6)}
@@ -55,13 +41,12 @@
   @keyframes spin{to{transform:rotate(360deg)}}
   .loader-text{color:#bfeff7;font-weight:700}
   .loader-sub{color:var(--muted);font-size:13px;margin-top:4px}
-
   @media(max-width:920px){ .flex{flex-direction:column} .left{flex-basis:auto} }
 </style>
 </head>
 <body>
 <div class="wrap">
-  <h1>Passport Tools</h1>
+  <h1>Passport Tools — Multi API Keys</h1>
 
   <div class="panel">
     <div class="flex">
@@ -69,12 +54,9 @@
         <label>Upload portrait</label>
         <input id="file" type="file" accept="image/*">
         <div style="height:12px"></div>
-
         <div class="canvas-wrap">
-          <!-- we draw a checkerboard + transparent person in the preview canvas when "Remove BG" is used -->
           <canvas id="preview" width="360" height="456"></canvas>
         </div>
-
         <div style="height:10px"></div>
         <div class="muted">Preview (export 450×570)</div>
       </div>
@@ -87,7 +69,7 @@
               <button id="btnRemove" class="big remove">Remove Background</button>
               <button id="btnPassport" class="big passport">Passport size & Color make</button>
             </div>
-            <div class="hint" style="margin-top:8px">1) Remove BG → processes and enables manual "Download Removed PNG". 2) Passport → create passport composite and enable passport downloads.</div>
+            <div class="hint" style="margin-top:8px">Remove → produce removed PNG (manual download). Passport → composite and enable passport downloads.</div>
           </div>
 
           <div>
@@ -131,10 +113,8 @@
   </div>
 </div>
 
-<!-- hidden original full-size canvas for picking -->
 <canvas id="originalCanvas" style="display:none"></canvas>
 
-<!-- overlay loader -->
 <div id="overlay" class="overlay" aria-hidden="true">
   <div class="box" role="status" aria-live="polite">
     <div class="spinner" aria-hidden="true"></div>
@@ -145,19 +125,28 @@
   </div>
 </div>
 
-<!-- PSD lib -->
 <script src="https://cdn.jsdelivr.net/npm/ag-psd@12.0.0/dist/ag-psd.umd.min.js"></script>
 
 <script>
-/* remove.bg key (client) */
-const REMOVE_BG_KEY = 'jDDFFQjTtwEmhRHP1izPBt5B';
+/*
+  Multi API key handling:
+  - You supplied multiple remove.bg API keys; they are placed in API_KEYS array.
+  - callRemoveBg() will try each key in order until one returns OK.
+*/
 
-/* DOM refs */
+// ---- Put your keys here (I added the ones you gave) ----
+const API_KEYS = [
+  'jDDFFQjTtwEmhRHP1izPBt5B', // previous key (if still valid)
+  'jXyEt5XsWQPmZSS8nuBepW7p',
+  'La7emWvo6NcHSDv3HoLbSRMh'
+];
+
+// DOM refs
 const fileInput = document.getElementById('file');
 const btnRemove = document.getElementById('btnRemove');
 const btnPassport = document.getElementById('btnPassport');
 const preview = document.getElementById('preview'), ctx = preview.getContext('2d');
-const originalCanvas = document.getElementById('originalCanvas'), origCtx = originalCanvas.getContext('2d');
+const origCanvas = document.getElementById('originalCanvas'), origCtx = origCanvas.getContext('2d');
 
 const bgSel = document.getElementById('bgSel'), bgColor = document.getElementById('bgColor'), pickFromImg = document.getElementById('pickFromImg');
 const brightness = document.getElementById('brightness'), contrast = document.getElementById('contrast'), feather = document.getElementById('feather');
@@ -172,14 +161,13 @@ const loaderMain = document.getElementById('loaderMain'), loaderSub = document.g
 
 let uploadedFile = null;
 let origImage = null;
-let removedBlob = null;            // blob from remove.bg (transparent png) for manual download
-let latestPassportCanvas = null;  // final passport composite
+let removedBlob = null;
+let latestPassportCanvas = null;
 let picking = false;
 
-/* hide on-page logs; use console */
 function log(...t){ console.log(...t); }
 
-/* UI bindings */
+// UI binds
 bgSel.addEventListener('change', ()=> {
   bgColor.style.display = bgSel.value === 'custom' ? 'inline-block' : 'none';
   if(bgSel.value !== 'custom') bgColor.value = bgSel.value;
@@ -197,7 +185,7 @@ brightness.addEventListener('input', ()=> { bVal.textContent = (brightness.value
 contrast.addEventListener('input', ()=> { cVal.textContent = (contrast.value>0?'+':'')+contrast.value; });
 feather.addEventListener('input', ()=> { fVal.textContent = feather.value + 'px'; });
 
-/* file load */
+// file load
 fileInput.addEventListener('change', e=>{
   const f = e.target.files[0];
   if(!f) return;
@@ -208,8 +196,8 @@ fileInput.addEventListener('change', e=>{
   img.onload = ()=>{
     origImage = img;
     drawPreviewScaled(img);
-    originalCanvas.width = img.width; originalCanvas.height = img.height;
-    origCtx.clearRect(0,0,originalCanvas.width, originalCanvas.height);
+    origCanvas.width = img.width; origCanvas.height = img.height;
+    origCtx.clearRect(0,0,origCanvas.width, origCanvas.height);
     origCtx.drawImage(img,0,0);
     URL.revokeObjectURL(url);
     log('Loaded', img.width, img.height);
@@ -218,7 +206,6 @@ fileInput.addEventListener('change', e=>{
   img.src = url;
 });
 
-/* draw scaled preview of original image (for pick mode and default) */
 function drawPreviewScaled(img){
   const maxW = 360, maxH = 456;
   const w = img.width, h = img.height;
@@ -229,7 +216,6 @@ function drawPreviewScaled(img){
   ctx.drawImage(img, 0,0,w,h, 0,0,dw,dh);
 }
 
-/* preview click for picking color */
 preview.addEventListener('click', (ev)=>{
   if(!picking || !origImage) return;
   const rect = preview.getBoundingClientRect();
@@ -237,7 +223,7 @@ preview.addEventListener('click', (ev)=>{
   const scaleX = origImage.width / preview.width;
   const scaleY = origImage.height / preview.height;
   const ox = Math.floor(cx * scaleX), oy = Math.floor(cy * scaleY);
-  if(ox<0||oy<0||ox>=originalCanvas.width||oy>=originalCanvas.height) { picking=false; return; }
+  if(ox<0||oy<0||ox>=origCanvas.width||oy>=origCanvas.height) { picking=false; return; }
   const pd = origCtx.getImageData(ox,oy,1,1).data;
   const hex = rgbToHex(pd[0],pd[1],pd[2]);
   bgSel.value = 'custom'; bgColor.style.display = 'inline-block'; bgColor.value = hex;
@@ -246,24 +232,7 @@ preview.addEventListener('click', (ev)=>{
   updatePreviewBackground();
 });
 
-/* Draw checkerboard background for preview when showing transparent person */
-function drawChecker(width, height, size=12){
-  // draw small checkerboard into preview canvas
-  ctx.clearRect(0,0,preview.width,preview.height);
-  const cols = Math.ceil(width / size), rows = Math.ceil(height / size);
-  for(let y=0;y<rows;y++){
-    for(let x=0;x<cols;x++){
-      ctx.fillStyle = ((x+y)%2===0) ? '#c9dfe6' : '#f5fbff';
-      // but scale checker to preview size, so use fillRect with scaled positions:
-      const cw = preview.width / cols;
-      const ch = preview.height / rows;
-      ctx.fillStyle = ((x+y)%2===0) ? '#c9dfe6' : '#f5fbff';
-      ctx.fillRect(x*cw, y*ch, cw, ch);
-    }
-  }
-}
-
-/* instant preview update when selecting bg or after other ops */
+/* update preview background instantly */
 function updatePreviewBackground(){
   let bg = bgSel.value === 'custom' ? (bgColor.value || '#6ba0e6') : bgSel.value;
   if(!preview.width || !preview.height){ preview.width = 360; preview.height = 456; }
@@ -284,12 +253,11 @@ function updatePreviewBackground(){
   ctx.restore();
 }
 
-/* overlay */
+/* overlay controls */
 function showLoader(main='Processing — please wait…', sub='Contacting remove.bg'){
   document.getElementById('overlay').classList.add('show');
   loaderMain.textContent = main;
   loaderSub.textContent = sub;
-  // disable
   btnRemove.classList.add('disabled'); btnPassport.classList.add('disabled');
   fileInput.disabled = true; pickFromImg.disabled = true; bgSel.disabled = true; bgColor.disabled = true;
   brightness.disabled = true; contrast.disabled = true; feather.disabled = true;
@@ -300,61 +268,99 @@ function hideLoader(){
   btnRemove.classList.remove('disabled'); btnPassport.classList.remove('disabled');
   fileInput.disabled = false; pickFromImg.disabled = false; bgSel.disabled = false; bgColor.disabled = false;
   brightness.disabled = false; contrast.disabled = false; feather.disabled = false;
-  // enable depending on state
   if(removedBlob) dlRemoved.disabled = false;
   if(latestPassportCanvas){ dlPng.disabled = false; dlJpg.disabled = false; dlPsd.disabled = false; }
 }
 
-/* Remove Background: process but DO NOT auto-download.
-   Save blob in removedBlob and enable dlRemoved button. Also show transparent person over checker preview.
+/* ===== updated remove.bg caller with key rotation =====
+   - Tries each API key from API_KEYS in order.
+   - If response.ok -> returns blob immediately.
+   - If response status indicates auth/error/quota (401/402/403/429/5xx), try next key.
+   - Collects errors for final reporting.
 */
+async function callRemoveBgWithRotation(file){
+  const url = 'https://api.remove.bg/v1.0/removebg';
+  const errors = [];
+  for(const key of API_KEYS){
+    try{
+      // small UI hint
+      log('Trying remove.bg with key:', key.slice(0,6) + '…');
+      const form = new FormData();
+      form.append('image_file', file);
+      form.append('size', 'auto');
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(()=> controller.abort(), 70000);
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'X-Api-Key': key },
+        body: form,
+        signal: controller.signal
+      });
+      clearTimeout(timeoutId);
+
+      if(res.ok){
+        log('remove.bg success with key:', key.slice(0,8));
+        return await res.blob();
+      } else {
+        const txt = await res.text().catch(()=> '');
+        const errMsg = `Key ${key.slice(0,6)} failed: ${res.status} ${txt}`;
+        errors.push(errMsg);
+        log(errMsg);
+        // try next key
+        continue;
+      }
+    }catch(err){
+      const s = err && err.name === 'AbortError' ? 'timeout' : (err.message || err);
+      const errMsg = `Key ${key.slice(0,6)} error: ${s}`;
+      errors.push(errMsg);
+      log(errMsg);
+      // try next key
+      continue;
+    }
+  }
+  // all keys failed
+  throw new Error('All API keys failed. Details:\\n' + errors.join('\\n'));
+}
+
+/* Button: Remove Background (no auto download) */
 btnRemove.addEventListener('click', async ()=>{
   if(!uploadedFile) return alert('Choose an image first');
   try{
-    showLoader('Removing background…', 'Uploading to remove.bg');
-    const blob = await callRemoveBg(uploadedFile);
+    showLoader('Removing background…', 'Trying API keys');
+    const blob = await callRemoveBgWithRotation(uploadedFile);
     removedBlob = blob;
-    // show transparent person on checkerboard so user can inspect
+    // show checker + transparent person
     const img = await blobToImage(blob);
-    // draw checker then person centered
     drawChecker(preview.width, preview.height, 12);
-    // draw person scaled to preview
+    // draw person centered scaled
     const srcRatio = img.width / img.height;
     const destRatio = preview.width / preview.height;
     let drawW, drawH;
     if(srcRatio > destRatio){
-      drawH = preview.height;
-      drawW = Math.round(img.width * (preview.height / img.height));
+      drawH = preview.height; drawW = Math.round(img.width * (preview.height / img.height));
     } else {
-      drawW = preview.width;
-      drawH = Math.round(img.height * (preview.width / img.width));
+      drawW = preview.width; drawH = Math.round(img.height * (preview.width / img.width));
     }
     const dx = Math.round((preview.width - drawW)/2), dy = Math.round((preview.height - drawH)/2);
     ctx.drawImage(img, dx, dy, drawW, drawH);
-    // enable manual download button
     dlRemoved.disabled = false;
     hideLoader();
-    log('Removed bg processed — click "Download Removed PNG" to save manually.');
+    log('Removed PNG ready (manual download).');
   }catch(err){
     hideLoader();
     console.error(err);
-    alert('Error: ' + (err.message || err));
+    alert('Remove BG failed: ' + (err.message || err));
   }
 });
 
-/* manual download for removed PNG */
-dlRemoved.addEventListener('click', ()=>{
-  if(!removedBlob) return alert('No removed image available. Click Remove Background first.');
-  downloadBlob(removedBlob, 'removed_bg.png');
-});
-
-/* Passport generator flow (same as before) */
+/* Use the rotated caller for passport flow as well */
 btnPassport.addEventListener('click', async ()=>{
   if(!uploadedFile) return alert('Choose an image first');
   try{
-    showLoader('Creating passport image…', 'Uploading to remove.bg');
-    const pngBlob = await callRemoveBg(uploadedFile);
-    const personImg = await blobToImage(pngBlob);
+    showLoader('Creating passport image…', 'Trying API keys');
+    const blob = await callRemoveBgWithRotation(uploadedFile);
+    const personImg = await blobToImage(blob);
     const passportCanvas = compositePassport(personImg);
     latestPassportCanvas = passportCanvas;
     showPassportPreview(passportCanvas);
@@ -363,33 +369,11 @@ btnPassport.addEventListener('click', async ()=>{
   }catch(err){
     hideLoader();
     console.error(err);
-    alert('Error: ' + (err.message || err));
+    alert('Passport creation failed: ' + (err.message || err));
   }
 });
 
-/* remove.bg call */
-async function callRemoveBg(file){
-  const url = 'https://api.remove.bg/v1.0/removebg';
-  const form = new FormData();
-  form.append('image_file', file);
-  form.append('size', 'auto');
-  const controller = new AbortController();
-  const timeout = setTimeout(()=> controller.abort(), 70000);
-  try{
-    const res = await fetch(url, { method:'POST', headers:{ 'X-Api-Key': REMOVE_BG_KEY }, body: form, signal: controller.signal });
-    clearTimeout(timeout);
-    if(!res.ok){
-      const txt = await res.text();
-      throw new Error('remove.bg failed: ' + res.status + ' ' + txt);
-    }
-    return await res.blob();
-  }catch(e){
-    clearTimeout(timeout);
-    throw e;
-  }
-}
-
-/* helpers */
+/* callRemoveBgWithRotation uses blobToImage, downloadBlob etc. */
 function blobToImage(blob){
   return new Promise((res, rej)=>{
     const url = URL.createObjectURL(blob);
@@ -409,7 +393,13 @@ function downloadBlob(blob, filename){
   setTimeout(()=> URL.revokeObjectURL(a.href), 2000);
 }
 
-/* passport composite (450x570) */
+/* manual download for removed PNG */
+dlRemoved.addEventListener('click', ()=>{
+  if(!removedBlob) return alert('No removed image available. Click Remove Background first.');
+  downloadBlob(removedBlob, 'removed_bg.png');
+});
+
+/* passport composite & preview functions (same as earlier) */
 function compositePassport(personImg){
   const OUT_W = 450, OUT_H = 570;
   const c = document.createElement('canvas'); c.width = OUT_W; c.height = OUT_H;
@@ -423,11 +413,9 @@ function compositePassport(personImg){
   const destRatio = OUT_W / OUT_H;
   let drawW, drawH;
   if(srcRatio > destRatio){
-    drawH = OUT_H;
-    drawW = Math.round(personImg.width * (OUT_H / personImg.height));
+    drawH = OUT_H; drawW = Math.round(personImg.width * (OUT_H / personImg.height));
   } else {
-    drawW = OUT_W;
-    drawH = Math.round(personImg.height * (OUT_W / personImg.width));
+    drawW = OUT_W; drawH = Math.round(personImg.height * (OUT_W / personImg.width));
   }
   const dx = Math.round((OUT_W - drawW) / 2), dy = Math.round((OUT_H - drawH) / 2);
   cctx.drawImage(personImg, dx, dy, drawW, drawH);
@@ -437,19 +425,16 @@ function compositePassport(personImg){
 
   return c;
 }
-
-/* show passport preview scaled */
 function showPassportPreview(canvas){
   latestPassportCanvas = canvas;
   preview.width = Math.min(420, canvas.width);
   preview.height = Math.round(preview.width * canvas.height / canvas.width);
   ctx.clearRect(0,0,preview.width,preview.height);
   ctx.drawImage(canvas, 0,0, canvas.width, canvas.height, 0,0, preview.width, preview.height);
-  // enable downloads
   dlPng.disabled = false; dlJpg.disabled = false; dlPsd.disabled = false;
 }
 
-/* image operations */
+/* image ops */
 function applyBrightnessContrast(canvas, bright=0, contrastVal=0){
   const ctx2 = canvas.getContext('2d');
   const img = ctx2.getImageData(0,0,canvas.width,canvas.height);
@@ -484,15 +469,15 @@ function clamp(v){ return Math.max(0, Math.min(255, Math.round(v))); }
 function rgbToHex(r,g,b){ return '#' + [r,g,b].map(x => x.toString(16).padStart(2,'0')).join(''); }
 
 /* downloads for passport */
-dlPng.addEventListener('click', ()=>{
+dlPng.addEventListener('click', ()=> {
   if(!latestPassportCanvas) return alert('Generate passport first');
   latestPassportCanvas.toBlob(b => downloadBlob(b, 'passport.png'), 'image/png');
 });
-dlJpg.addEventListener('click', ()=>{
+dlJpg.addEventListener('click', ()=> {
   if(!latestPassportCanvas) return alert('Generate passport first');
   latestPassportCanvas.toBlob(b => downloadBlob(b, 'passport.jpg'), 'image/jpeg', 0.92);
 });
-dlPsd.addEventListener('click', ()=>{
+dlPsd.addEventListener('click', ()=> {
   if(!latestPassportCanvas) return alert('Generate passport first');
   try{
     const ag = window['agPsd'];
@@ -514,14 +499,10 @@ resetBtn.addEventListener('click', ()=> {
   updatePreviewBackground();
 });
 
-/* utility to draw checker (used earlier) when previewing removed image.
-   This will draw visible checkers scaled to preview size even if img differs.
-*/
+/* utility drawChecker */
 function drawChecker(width, height, size=12){
-  // we reuse the canvas width/height for scaled checker pattern
   const cols = Math.ceil(width / size), rows = Math.ceil(height / size);
-  const cw = preview.width / cols;
-  const ch = preview.height / rows;
+  const cw = preview.width / cols, ch = preview.height / rows;
   for(let y=0;y<rows;y++){
     for(let x=0;x<cols;x++){
       ctx.fillStyle = ((x+y)%2===0) ? '#c9dfe6' : '#f5fbff';
