@@ -4,12 +4,16 @@
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>PixelKit — PhotoTools</title>
+
+<!-- Performance: preconnect + fonts (display=swap helps avoid FOIT) -->
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@300;400&display=swap" rel="stylesheet">
+
 <style>
   :root{
     --bg:#020617;
     --panel: rgba(255,255,255,0.035);
-    --muted:#a8c9dd;            /* slightly lighter for readability */
+    --muted:#cbe8f7;            /* slightly lighter for readability */
     --neon-cyan:#00f0ff;
     --neon-mag:#d39bff;        /* slightly lighter magenta for contrast */
     --radius:12px;
@@ -17,21 +21,25 @@
     --tile-icon-bg: linear-gradient(135deg, rgba(0,240,255,0.12), rgba(195,130,252,0.08));
   }
   *{box-sizing:border-box}
+  html,body{height:100%}
   body{
     margin:0;
     background:linear-gradient(180deg,#01040a 0%, #020617 100%);
     color:#e6f7ff;
     font-family:Inter, system-ui, sans-serif;
+    -webkit-font-smoothing:antialiased;
+    -moz-osx-font-smoothing:grayscale;
   }
   .wrap{max-width:var(--container);margin:24px auto;padding:20px}
   header{display:flex;align-items:center;justify-content:space-between;gap:12px}
   .brand{display:flex;align-items:center;gap:14px}
   .logo{width:64px;height:64px;border-radius:12px;background:linear-gradient(135deg,var(--neon-cyan),var(--neon-mag));display:flex;align-items:center;justify-content:center;font-family:Orbitron;color:#00141a;font-weight:700}
   nav a{color:var(--muted);text-decoration:none;margin-left:10px;padding:8px;border-radius:8px}
-  /* primary CTA in header/hero */
+
+  /* hero CTA */
   .hero-cta { margin-top:14px; display:flex;justify-content:center }
   .hero-cta .cta-btn {
-    padding:12px 20px;border-radius:12px;border:0;background:linear-gradient(90deg,var(--neon-cyan),var(--neon-mag));color:#00141a;font-weight:800;cursor:pointer;box-shadow: 0 8px 30px rgba(0,0,0,0.45)
+    padding:14px 28px;border-radius:999px;border:0;background:linear-gradient(90deg,var(--neon-cyan),var(--neon-mag));color:#00141a;font-weight:800;cursor:pointer;box-shadow: 0 14px 40px rgba(0,120,140,0.14), 0 4px 14px rgba(0,0,0,0.45);
   }
 
   /* Home tiles */
@@ -49,6 +57,7 @@
     transform: translateZ(0);
     border:1px solid rgba(255,255,255,0.06);
     display:flex;flex-direction:column;align-items:center;gap:8px;
+    min-height:150px;
   }
   .tile:focus{ outline: none; box-shadow: 0 14px 40px rgba(0,0,0,0.7), 0 0 20px rgba(0,240,255,0.06); transform: translateY(-6px) scale(1.01); }
   .tile:hover{ transform: translateY(-6px) scale(1.01); box-shadow: 0 18px 40px rgba(0,0,0,0.7); }
@@ -61,18 +70,19 @@
   .tile h3{margin:6px 0;color:var(--neon-cyan);font-family:Orbitron;font-size:15px}
   .tile p{color:var(--muted);font-size:13px;margin:0;line-height:1.25}
 
+  /* subtle neon border (tuned) */
   .tile::before{
     content:"";
     position:absolute; inset:0;
-    border:2px solid var(--neon-cyan);
+    border:2px solid rgba(0,240,255,0.06);
     border-radius:16px;
-    opacity:0.45;
-    filter:drop-shadow(0 0 10px var(--neon-cyan));
+    opacity:0.35;
+    filter:drop-shadow(0 0 6px rgba(0,240,255,0.06));
     pointer-events:none;
     transform:skew(-2deg,-1deg);
     transition:opacity .18s ease, filter .18s ease;
   }
-  .tile:hover::before{ opacity:0.85; filter: drop-shadow(0 0 18px var(--neon-cyan)); }
+  .tile:hover::before{ opacity:0.75; filter: drop-shadow(0 0 12px rgba(0,240,255,0.12)); }
 
   /* Tool page container */
   .tool-page{
@@ -188,7 +198,17 @@
 
   /* 2048x1152 resizer tweaks (kept) */
   #resizer2048 { padding: 28px; border-radius: 14px; background: linear-gradient(180deg, rgba(255,255,255,0.014), rgba(255,255,255,0.01)); border: 1px solid rgba(0,255,255,0.06); box-shadow: 0 10px 40px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.012); position: relative; }
-  /* rest omitted here for brevity - reusing existing styles below (kept identical) */
+  #resizer2048 .panel { border-radius: 12px; padding: 18px; margin-top: 12px; background: linear-gradient(180deg, rgba(0,0,0,0.18), rgba(255,255,255,0.01)); border: 1px solid rgba(255,255,255,0.03); box-shadow: 0 8px 24px rgba(0,0,0,0.6), 0 0 30px rgba(0,240,255,0.02); }
+  #resizer2048 .row { display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-top:12px; }
+  #resizer2048 label { color:var(--muted); min-width:120px; }
+  #resizer2048 select, #resizer2048 input[type="number"] { max-width: 260px; background: linear-gradient(180deg, #061426, #071226); border: 1px solid rgba(255,255,255,0.06); padding:10px 12px; }
+  #resizer2048 .actions { margin-top:16px; display:flex; gap:10px; align-items:center; }
+  #resizer2048 .generate { padding:12px 18px; border-radius:12px; font-weight:800; letter-spacing:0.6px; box-shadow: 0 8px 30px rgba(0,0,0,0.5); }
+  #resizer2048 #download2048 { padding:12px 14px; border-radius:12px; border: 1px solid rgba(255,255,255,0.06); background: linear-gradient(90deg,var(--neon-cyan),var(--neon-mag)); color:#00141a; font-weight:700; display:none; box-shadow: 0 8px 30px rgba(0,0,0,0.55); }
+  #resizer2048 .preview-card { margin-top:18px; display:flex; gap:16px; align-items:flex-start; flex-wrap:wrap; }
+  #resizer2048 .preview-card img { border-radius:10px; max-width:420px; border:1px solid rgba(255,255,255,0.04); box-shadow: 0 14px 40px rgba(0,0,0,0.6); }
+  #resizer2048 .meta { color:var(--muted); font-size:13px; }
+  #resizer2048::before{ content:""; position:absolute; left:12px; top:12px; width:72px; height:24px; border-radius:8px; background: linear-gradient(90deg, rgba(0,240,255,0.06), rgba(192,132,252,0.03)); box-shadow: 0 6px 24px rgba(0,240,255,0.03); pointer-events:none; }
 
   footer{margin-top:24px;color:var(--muted);text-align:center}
   @media(max-width:1100px){ .preview-box{width:100%;order:2} .controls{order:1} .res500-wrap{flex-direction:column} }
@@ -211,7 +231,7 @@
   .site-footer .footer-copy{ color:#8fa3c2; font-size:13px; margin-top:6px }
 
   .site-footer .footer-nav{ display:flex; gap:28px; align-items:center; justify-content:center; flex:1; }
-  .site-footer .footer-nav a{ color:#9fb0c8; text-decoration:none; font-size:14px; padding:8px 10px; position:relative; transition: color .12s ease, transform .12s ease; border-radius:6px; }
+  .site-footer .footer-nav a{ color:#9fb0c8; text-decoration:none; font-size:14px; padding:10px 14px; position:relative; transition: color .12s ease, transform .12s ease; border-radius:8px; }
   .site-footer .footer-nav a:not(:last-child){ margin-right:12px }
 
   .site-footer .footer-nav a:hover,
@@ -219,6 +239,7 @@
     color: var(--neon-cyan);
     transform: translateY(-2px);
     outline: none;
+    text-decoration: underline 1px solid rgba(0,240,255,0.08);
   }
 
   .site-footer .footer-nav a + a::before{
@@ -240,6 +261,21 @@
   /* focus ring for interactive buttons/tiles for keyboard users */
   .tile, button, .btn, .small-btn, .copy { outline-offset:3px; }
   .tile:focus-visible, button:focus-visible, .btn:focus-visible { box-shadow: 0 0 0 4px rgba(0,240,255,0.06), 0 16px 36px rgba(0,0,0,0.6); border-radius:12px; }
+
+  /* small contrast bump for small text & footer links */
+  .tile p, .meta, .site-footer .footer-nav a { color: #cbe8f7; }
+
+  /* CTA mobile adjustments */
+  @media(max-width:700px){
+    .hero-cta { padding: 10px; }
+    .hero-cta .cta-btn { width:90%; font-size:15px; display:block; margin:0 auto; }
+  }
+
+  /* reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    .tile, .tile * { transition: none !important; animation: none !important; transform: none !important; }
+    html { scroll-behavior: auto; }
+  }
 
 </style>
 </head>
@@ -275,51 +311,96 @@
 
       <h2 style="color:var(--neon-cyan);font-family:Orbitron">Tools</h2>
       <div class="home" role="list">
-        <!-- Order & names updated (compact labels, consistent icons) -->
-        <div class="tile" role="listitem" tabindex="0" onclick="showTool('urltool')">
-          <div class="icon" aria-hidden="true">🔗</div>
+        <!-- tiles with SVG icons (consistent stroke style) -->
+        <div class="tile" role="button" tabindex="0" aria-label="Open URL to HTML tool" onclick="showTool('urltool')">
+          <div class="icon" aria-hidden="true">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#cfefff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M10 14a3 3 0 0 1 0-4l1-1a3 3 0 0 1 4.24 0l1 1a3 3 0 0 1 0 4.24l-1 1"/>
+              <path d="M14 10a3 3 0 0 1 0 4l-1 1a3 3 0 0 1-4.24 0l-1-1a3 3 0 0 1 0-4.24l1-1"/>
+            </svg>
+          </div>
           <h3>URL → HTML</h3>
           <p>Paste URLs → anchor tags</p>
         </div>
 
-        <div class="tile" role="listitem" tabindex="0" onclick="showTool('linkShuffle')">
-          <div class="icon" aria-hidden="true">🔀</div>
+        <div class="tile" role="button" tabindex="0" aria-label="Open Link Shuffle" onclick="showTool('linkShuffle')">
+          <div class="icon" aria-hidden="true">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#cfefff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 7L9 19"/>
+              <path d="M21 7h-7v7"/>
+            </svg>
+          </div>
           <h3>Link Shuffle</h3>
           <p>Shuffle & copy URL list</p>
         </div>
 
-        <div class="tile" role="listitem" tabindex="0" onclick="showTool('descShorter')">
-          <div class="icon" aria-hidden="true">✂️</div>
+        <div class="tile" role="button" tabindex="0" aria-label="Open Description Shorter" onclick="showTool('descShorter')">
+          <div class="icon" aria-hidden="true">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#cfefff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 12h18"/>
+              <path d="M10 6h11"/>
+              <path d="M10 18h11"/>
+              <path d="M6 8l4 8"/>
+            </svg>
+          </div>
           <h3>Desc Shorter</h3>
           <p>Shorten descriptions</p>
         </div>
 
-        <div class="tile" role="listitem" tabindex="0" onclick="showTool('resizer500')">
-          <div class="icon" aria-hidden="true">🖼️</div>
+        <div class="tile" role="button" tabindex="0" aria-label="Open Logo Maker 500x500" onclick="showTool('resizer500')">
+          <div class="icon" aria-hidden="true">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#cfefff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="18" height="18" rx="2"/>
+              <path d="M8 14s1-2 4-2 4 2 4 2"/>
+              <path d="M9 9h.01M15 9h.01"/>
+            </svg>
+          </div>
           <h3>Logo Maker (500×500)</h3>
           <p>Interactive resize & position</p>
         </div>
 
-        <div class="tile" role="listitem" tabindex="0" onclick="showTool('resizer2048')">
-          <div class="icon" aria-hidden="true">🖼️</div>
+        <div class="tile" role="button" tabindex="0" aria-label="Open Cover Maker 2048x1152" onclick="showTool('resizer2048')">
+          <div class="icon" aria-hidden="true">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#cfefff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="6" width="18" height="12" rx="2"/>
+              <path d="M3 12h18"/>
+              <circle cx="8.5" cy="10.5" r="1.2"/>
+            </svg>
+          </div>
           <h3>Cover Maker (2048×1152)</h3>
           <p>Fit / crop photos to exact size</p>
         </div>
 
-        <div class="tile" role="listitem" tabindex="0" onclick="showTool('resizer')">
-          <div class="icon" aria-hidden="true">⚙️</div>
+        <div class="tile" role="button" tabindex="0" aria-label="Open Image Resizer Pro" onclick="showTool('resizer')">
+          <div class="icon" aria-hidden="true">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#cfefff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 16V8a2 2 0 0 0-2-2h-4"/><path d="M3 8v8a2 2 0 0 0 2 2h4"/>
+              <path d="M7 12h10"/>
+            </svg>
+          </div>
           <h3>Image Resizer Pro</h3>
           <p>Resize to any px / in / cm</p>
         </div>
 
-        <div class="tile" role="listitem" tabindex="0" onclick="showTool('converter')">
-          <div class="icon" aria-hidden="true">🔁</div>
+        <div class="tile" role="button" tabindex="0" aria-label="Open ImgConvert" onclick="showTool('converter')">
+          <div class="icon" aria-hidden="true">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#cfefff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 12v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h6"/>
+              <path d="M17 7l4-4M21 7v-4h-4"/>
+            </svg>
+          </div>
           <h3>ImgConvert</h3>
           <p>PNG ⇆ JPG ⇆ WEBP</p>
         </div>
 
-        <div class="tile" role="listitem" tabindex="0" onclick="showTool('compressor')">
-          <div class="icon" aria-hidden="true">⚡</div>
+        <div class="tile" role="button" tabindex="0" aria-label="Open ImgCompressor" onclick="showTool('compressor')">
+          <div class="icon" aria-hidden="true">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#cfefff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2v6M12 22v-6"/>
+              <path d="M5 7l6 4 6-4"/>
+              <path d="M5 17l6-4 6 4"/>
+            </svg>
+          </div>
           <h3>ImgCompressor</h3>
           <p>Reduce filesize with quality control</p>
         </div>
@@ -361,7 +442,7 @@
       </div>
 
       <div class="preview-wrap" id="resPreview" style="display:none">
-        <img id="resPreviewImg" class="preview-img" alt="Preview">
+        <img id="resPreviewImg" class="preview-img" alt="Resized preview image">
         <div class="meta">
           <div class="muted">Original:</div>
           <div id="origMeta" class="muted" style="margin-bottom:8px"></div>
@@ -475,7 +556,7 @@ https://example.net/article
         </div>
 
         <div class="preview-card" id="previewWrap" style="display:none">
-          <img id="previewImg" class="preview-img" alt="Preview">
+          <img id="previewImg" class="preview-img" alt="Generated cover preview">
           <div>
             <div class="meta"><strong style="color:var(--neon-cyan)">Original</strong></div>
             <div id="origMeta2048" class="meta" style="margin-bottom:10px"></div>
@@ -569,7 +650,7 @@ https://example.net/article
 
         <div class="preview-box">
           <div class="canvas-frame">
-            <canvas id="canvas500" width="500" height="500" style="display:block"></canvas>
+            <canvas id="canvas500" width="500" height="500" style="display:block" aria-label="Preview canvas for logo"></canvas>
           </div>
           <div style="width:100%;display:flex;justify-content:space-between;align-items:center">
             <div class="meta" id="origInfo500"></div>
@@ -657,7 +738,7 @@ https://example.net/article
       </div>
     </section>
 
-    <!-- INSERTED FOOTER SNIPPET (as requested) -->
+    <!-- FOOTER -->
     <footer class="site-footer">
       <div class="footer-inner">
         <div class="footer-left">
@@ -684,7 +765,7 @@ https://example.net/article
   </div>
 
 <script>
-  // navigation with history.pushState and popstate handling (unchanged logic)
+  /* --- Navigation & initial state (same as before) --- */
   function showHome(push = true){
     const home = document.getElementById('homeView');
     if (home) home.style.display = 'block';
@@ -720,7 +801,6 @@ https://example.net/article
     window.scrollTo({top:0,behavior:'smooth'});
   }
 
-  // handle browser back/forward
   window.addEventListener('popstate', function(event){
     const state = event.state;
     if(state && state.page){
@@ -728,7 +808,6 @@ https://example.net/article
       else showTool(state.page, false);
       return;
     }
-
     const hash = (location.hash || '').replace('#','');
     if(!hash || hash === 'home'){
       showHome(false);
@@ -739,7 +818,6 @@ https://example.net/article
     }
   });
 
-  // on initial load: open the view according to URL hash (if any)
   (function initFromHash(){
     const hash = (location.hash || '').replace('#','');
     if(!hash || hash === 'home'){
@@ -760,7 +838,7 @@ https://example.net/article
     return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
   }
 
-  // Basic Resizer (generateResized) - unchanged logic
+  /* --- Image tools logic (kept) --- */
   let lastGeneratedUrl = null;
   function generateResized(){
     const file = document.getElementById('resizeFile').files[0];
@@ -1326,6 +1404,10 @@ https://example.net/article
         tile.style.transform = `rotateX(${rx}deg) rotateY(${ry}deg) translateZ(0) translateY(-6px)`;
       });
       tile.addEventListener('mouseleave', ()=>{ tile.style.transform = ''; });
+      // keyboard: Enter/Space triggers click
+      tile.addEventListener('keydown', (ev)=>{
+        if(ev.key === 'Enter' || ev.key === ' '){ ev.preventDefault(); tile.click(); }
+      });
     });
   })();
 
@@ -1336,6 +1418,8 @@ https://example.net/article
       catch(e){ /* ignore */ }
     }
   })();
+
+  /* Accessibility checklist (1-line): ensure all <img> have alt, interactive tiles have role/button + tabindex, keyboard Enter/Space triggers click, and color contrast checked for small text. */
 </script>
 </body>
 </html>
