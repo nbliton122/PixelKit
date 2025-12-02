@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Passport Generator — remove.bg (with color picker & sample)</title>
+<title>Passport Generator — remove.bg (studio color)</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
 <style>
   body{font-family:Inter,system-ui,Arial;background:#06151a;color:#d8fbff;margin:0;padding:18px}
@@ -17,19 +17,18 @@
   .small{background:#0b2b34;color:#9fe7f7;padding:8px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.03);cursor:pointer}
   .log{white-space:pre-wrap;color:#9ad9ea;padding:10px;background:rgba(255,255,255,0.01);border-radius:8px;min-height:120px}
   .hint{color:#9ad9ea;font-size:13px}
-  #originalCanvas{display:none} /* hidden helper for color picking */
-  .picker-note{font-size:13px;color:#9ad9ea;margin-top:6px}
+  #originalCanvas{display:none}
 </style>
 </head>
 <body>
 <div class="wrap">
-  <h1>Passport Generator — remove.bg (color pick)</h1>
+  <h1>Passport Generator — Studio Color</h1>
 
   <div class="panel">
     <div style="display:flex;justify-content:space-between;align-items:center">
       <div>
         <strong style="color:#bff6ff">Upload portrait</strong>
-        <div class="hint">You can pick any pixel color from the original image (click) to use as the background — or use the color picker.</div>
+        <div class="hint">Studio color added as a preset. You can still pick custom color or sample blues.</div>
       </div>
       <div style="display:flex;gap:8px;align-items:center">
         <input id="file" type="file" accept="image/*">
@@ -46,17 +45,19 @@
       <div style="flex:1;min-width:320px">
         <div class="row"><label>Background color</label>
           <select id="bgSel">
-            <option value="#5d8fe0">Passport blue (default)</option>
+            <!-- Studio color added and set as default -->
+            <option value="#6ba0e6" selected>Studio color</option>
+            <option value="#5d8fe0">Passport blue (default old)</option>
             <option value="#5a8bd1">Sample blue 2</option>
             <option value="#4f88c2">Sample blue 3</option>
             <option value="custom">Custom / pick from image</option>
           </select>
-          <input id="bgColor" type="color" value="#5d8fe0" style="display:none">
+          <input id="bgColor" type="color" value="#6ba0e6" style="display:none">
         </div>
 
         <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px">
           <button id="pickFromImg" class="small">Pick color from original image</button>
-          <div class="picker-note">(Click this, then click a pixel on the preview original image when it appears.)</div>
+          <div class="picker-note" style="font-size:13px;color:#9ad9ea">(Click this, then click a pixel on the preview original image.)</div>
         </div>
 
         <div class="row"><label>Brightness</label><input id="brightness" type="range" min="-80" max="80" value="6"><div id="bVal" style="width:40px;text-align:right;color:#9ad9ea">+6</div></div>
@@ -74,26 +75,26 @@
       </div>
     </div>
 
-    <div style="margin-top:12px" class="log" id="log">Ready. Paste your remove.bg API key in the code variable (REMOVE_BG_KEY) if not already set.</div>
+    <div style="margin-top:12px" class="log" id="log">Ready. Studio color is set as preset. If you want a different exact tone, tell me the hex and I'll change it.</div>
   </div>
 </div>
 
-<!-- hidden helper canvas to show original image for picking -->
 <canvas id="originalCanvas"></canvas>
 
 <!-- libs -->
 <script src="https://cdn.jsdelivr.net/npm/ag-psd@12.0.0/dist/ag-psd.umd.min.js"></script>
 
 <script>
-/* === WARNING ===
- This file calls remove.bg directly from browser using the API key below.
- You said API leak is ok. If you change your mind, stop using client key and use server proxy.
+/* === NOTE ===
+  This client HTML calls remove.bg directly and includes your API key.
+  You told me API leak is not a problem, so it's embedded below.
+  If you change your mind later, use a server proxy instead.
 */
 
-// ====== Your remove.bg API key (exposed in client) ======
+// ====== Your remove.bg API key (exposed client-side) ======
 const REMOVE_BG_KEY = 'jDDFFQjTtwEmhRHP1izPBt5B';
 
-// DOM
+// DOM refs
 const fileInput = document.getElementById('file');
 const btnGo = document.getElementById('btnGo');
 const preview = document.getElementById('preview'), ctx = preview.getContext('2d');
@@ -107,12 +108,13 @@ const bVal = document.getElementById('bVal'), cVal = document.getElementById('cV
 const origCanvas = document.getElementById('originalCanvas'), origCtx = origCanvas.getContext('2d');
 
 let uploadedFile = null;
-let origImageObj = null; // original Image object
+let origImageObj = null;
 let finalCanvas = null;
 let picking = false;
 
-// UI helpers
-function log(...t){ logEl.textContent += t.join(' ') + '\\n'; logEl.scrollTop = 9999; }
+function log(...t){ logEl.textContent += t.join(' ') + "\n"; logEl.scrollTop = 9999; }
+
+// UI bindings
 bgSel.addEventListener('change', ()=> { bgColor.style.display = bgSel.value === 'custom' ? 'inline-block' : 'none'; });
 brightness.addEventListener('input', ()=> bVal.textContent = (brightness.value>0?'+':'')+brightness.value);
 contrast.addEventListener('input', ()=> cVal.textContent = (contrast.value>0?'+':'')+contrast.value);
@@ -127,8 +129,8 @@ fileInput.addEventListener('change', e=>{
   img.crossOrigin = "anonymous";
   img.onload = ()=> {
     origImageObj = img;
-    drawPreview(img); // show original preview for user before remove.bg result
-    // also prepare hidden original canvas for picker
+    drawPreview(img);
+    // prepare original canvas for color picking
     origCanvas.width = img.width; origCanvas.height = img.height;
     origCtx.clearRect(0,0,origCanvas.width,origCanvas.height);
     origCtx.drawImage(img,0,0);
@@ -148,41 +150,31 @@ function drawPreview(img){
   ctx.drawImage(img, 0,0,w,h, 0,0,dw,dh);
 }
 
-// pick from image flow
+// pick-from-image flow
 pickFromImgBtn.addEventListener('click', ()=>{
   if(!origImageObj) return alert('Upload image first to pick a color from it.');
   picking = true;
-  // show original at preview size so user can click on it to pick
   drawPreview(origImageObj);
   log('Pick mode: click on the preview to pick a background color from the original image.');
 });
 
-// on preview click: if picking, sample original canvas color and set as bgColor
 preview.addEventListener('click', (ev)=>{
   if(!picking || !origImageObj) return;
-  // map click coords to original image coords using scaling
   const rect = preview.getBoundingClientRect();
   const cx = ev.clientX - rect.left, cy = ev.clientY - rect.top;
   const scaleX = origImageObj.width / preview.width;
   const scaleY = origImageObj.height / preview.height;
   const ox = Math.floor(cx * scaleX), oy = Math.floor(cy * scaleY);
-  if(ox < 0 || oy < 0 || ox >= origCanvas.width || oy >= origCanvas.height) {
-    alert('Click inside the image area.');
-    return;
-  }
+  if(ox < 0 || oy < 0 || ox >= origCanvas.width || oy >= origCanvas.height) return;
   const pd = origCtx.getImageData(ox, oy, 1, 1).data;
   const hex = rgbToHex(pd[0], pd[1], pd[2]);
-  // set color picker and select custom
-  bgSel.value = 'custom';
-  bgColor.style.display = 'inline-block';
-  bgColor.value = hex;
+  bgSel.value = 'custom'; bgColor.style.display = 'inline-block'; bgColor.value = hex;
   picking = false;
-  // redraw preview to show original again (or you can keep)
   drawPreview(origImageObj);
   log('Picked color ' + hex + ' from image at ('+ox+','+oy+'). It is set as background.');
 });
 
-// main remove.bg + composite flow
+// main flow
 btnGo.addEventListener('click', async ()=>{
   if(!uploadedFile) return alert('Please choose an image first.');
   try{
@@ -192,7 +184,6 @@ btnGo.addEventListener('click', async ()=>{
     const personImg = await blobToImage(processedBlob);
     const composed = compositeOnBg(personImg);
     finalCanvas = composed;
-    // show preview scaled
     preview.width = Math.min(420, composed.width);
     preview.height = Math.round(preview.width * composed.height / composed.width);
     ctx.clearRect(0,0,preview.width,preview.height);
@@ -205,21 +196,12 @@ btnGo.addEventListener('click', async ()=>{
   }
 });
 
-// remove.bg call (client-side)
+// remove.bg client call
 async function callRemoveBg(file){
   const url = 'https://api.remove.bg/v1.0/removebg';
-  const form = new FormData();
-  form.append('image_file', file);
-  form.append('size', 'auto');
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: { 'X-Api-Key': REMOVE_BG_KEY },
-    body: form
-  });
-  if(!res.ok){
-    const t = await res.text();
-    throw new Error('remove.bg failed: ' + res.status + ' ' + t);
-  }
+  const form = new FormData(); form.append('image_file', file); form.append('size','auto');
+  const res = await fetch(url, { method:'POST', headers:{ 'X-Api-Key': REMOVE_BG_KEY }, body: form });
+  if(!res.ok){ const t = await res.text(); throw new Error('remove.bg failed: ' + res.status + ' ' + t); }
   return await res.blob();
 }
 
@@ -233,44 +215,35 @@ function blobToImage(blob){
   });
 }
 
-// composite transparent PNG (person) onto chosen BG color and apply edits
 function compositeOnBg(personImg){
   const OUT_W = 450, OUT_H = 570;
   const c = document.createElement('canvas'); c.width = OUT_W; c.height = OUT_H;
   const cctx = c.getContext('2d');
 
-  // chosen bg: if custom selected use picker value
   let bg = bgSel.value;
-  if(bg === 'custom') bg = bgColor.value || '#5d8fe0';
+  if(bg === 'custom') bg = bgColor.value || '#6ba0e6';
 
-  cctx.fillStyle = bg;
-  cctx.fillRect(0,0,OUT_W,OUT_H);
+  cctx.fillStyle = bg; cctx.fillRect(0,0,OUT_W,OUT_H);
 
-  // Fit & center personImg inside output (cover style)
   const srcRatio = personImg.width / personImg.height;
   const destRatio = OUT_W / OUT_H;
   let drawW, drawH;
   if(srcRatio > destRatio){
-    // image wider than dest: fill height
     drawH = OUT_H;
     drawW = Math.round(personImg.width * (OUT_H / personImg.height));
   } else {
-    // image taller or equal: fill width
     drawW = OUT_W;
     drawH = Math.round(personImg.height * (OUT_W / personImg.width));
   }
-  const dx = Math.round((OUT_W - drawW) / 2);
-  const dy = Math.round((OUT_H - drawH) / 2);
+  const dx = Math.round((OUT_W - drawW) / 2), dy = Math.round((OUT_H - drawH) / 2);
   cctx.drawImage(personImg, dx, dy, drawW, drawH);
 
-  // Basic adjustments
   applyBrightnessContrast(c, Number(brightness.value), Number(contrast.value));
   despillCanvas(c, bg, 0.88);
 
   return c;
 }
 
-// brightness & contrast
 function applyBrightnessContrast(canvas, bright=0, contrast=0){
   const ctx2 = canvas.getContext('2d');
   const img = ctx2.getImageData(0,0,canvas.width,canvas.height);
@@ -286,8 +259,7 @@ function applyBrightnessContrast(canvas, bright=0, contrast=0){
   ctx2.putImageData(img,0,0);
 }
 
-// despill: reduce blue-heavy fringe
-function despillCanvas(canvas, bgHex='#5d8fe0', strength=0.85){
+function despillCanvas(canvas, bgHex='#6ba0e6', strength=0.85){
   const ctx2 = canvas.getContext('2d');
   const img = ctx2.getImageData(0,0,canvas.width,canvas.height);
   const d = img.data;
@@ -337,29 +309,6 @@ function saveBlob(blob, name){
   a.click();
   a.remove();
   setTimeout(()=> URL.revokeObjectURL(a.href), 2000);
-}
-
-// simple wrapper for fetch with timeout
-async function fetchWithTimeout(url, opts={}, timeout=60000){
-  const controller = new AbortController();
-  const id = setTimeout(()=> controller.abort(), timeout);
-  try{
-    const res = await fetch(url, { ...opts, signal: controller.signal });
-    clearTimeout(id);
-    return res;
-  }catch(e){
-    clearTimeout(id);
-    throw e;
-  }
-}
-
-// remove.bg call with timeout
-async function callRemoveBg(file){
-  const url = 'https://api.remove.bg/v1.0/removebg';
-  const form = new FormData(); form.append('image_file', file); form.append('size','auto');
-  const res = await fetchWithTimeout(url, { method:'POST', headers:{ 'X-Api-Key': REMOVE_BG_KEY }, body: form }, 60000);
-  if(!res.ok){ const t = await res.text(); throw new Error('remove.bg failed: ' + res.status + ' ' + t); }
-  return await res.blob();
 }
 </script>
 </body>
