@@ -1,516 +1,1522 @@
 <!doctype html>
 <html lang="bn">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Passport Tools — Multi-API Keys</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>PixelKit — PhotoTools</title>
+
+<!-- Performance: preconnect + fonts -->
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@300;400&display=swap" rel="stylesheet">
+
 <style>
-  :root{--bg:#06151a;--panel:#071824;--muted:#9ad9ea;--accent:#7fefff}
-  body{font-family:Inter,system-ui,Arial;background:var(--bg);color:#d8fbff;margin:0;padding:22px}
-  .wrap{max-width:1100px;margin:0 auto}
-  h1{color:var(--accent);margin:0 0 16px;font-weight:700}
-  .panel{background:var(--panel);padding:16px;border-radius:12px;box-shadow:0 10px 40px rgba(0,0,0,0.6)}
-  .flex{display:flex;gap:18px;align-items:flex-start}
-  .left{flex:0 0 420px}
-  .right{flex:1}
-  .canvas-wrap{background:linear-gradient(180deg,#0c232b,#071824);padding:12px;border-radius:10px}
-  canvas{background:transparent;border-radius:8px;display:block;max-width:100%}
-  label{color:var(--muted);display:block;margin-bottom:8px}
-  select,input[type=color]{padding:8px;border-radius:8px;border:none;outline:none;background:#0b2b34;color:var(--muted)}
-  .controls{display:flex;flex-direction:column;gap:12px}
-  .row{display:flex;gap:10px;align-items:center}
-  .muted{color:var(--muted);font-size:13px}
-  .big-buttons{display:flex;gap:12px;margin:10px 0 0}
-  .big{padding:10px 14px;border-radius:28px;border:none;cursor:pointer;font-weight:700}
-  .big.remove{background:linear-gradient(90deg,#00e6ff,#b86bff); color:#06151a}
-  .big.passport{background:linear-gradient(90deg,#6bd1ff,#7be0a9); color:#06151a}
-  .dl-row{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap}
-  .dl{padding:10px 12px;border-radius:14px;border:none;color:#071824;cursor:pointer;font-weight:700}
-  .dl.png{background:linear-gradient(90deg,#ff7ad6,#7a8bff)}
-  .dl.jpg{background:linear-gradient(90deg,#5ce0ff,#00b3ff)}
-  .dl.psd{background:linear-gradient(90deg,#ffd16b,#ff7a7a)}
-  .dl.removed{background:linear-gradient(90deg,#a28bff,#6fe0ff)}
-  .small{padding:8px 10px;border-radius:8px;background:#0b2b34;color:var(--muted);border:1px solid rgba(255,255,255,0.03);cursor:pointer}
-  .hint{color:var(--muted);font-size:13px}
-  .disabled{opacity:0.6;pointer-events:none}
-  .overlay{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(2,10,14,0.6);z-index:9999;visibility:hidden;opacity:0;transition:opacity .18s,visibility .18s}
-  .overlay.show{visibility:visible;opacity:1}
-  .box{background:linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));padding:18px;border-radius:12px;display:flex;gap:14px;align-items:center;box-shadow:0 10px 40px rgba(0,0,0,0.6)}
-  .spinner{width:46px;height:46px;border-radius:50%;border:5px solid rgba(255,255,255,0.06);border-top-color:#00e6ff;animation:spin .9s linear infinite}
-  @keyframes spin{to{transform:rotate(360deg)}}
-  .loader-text{color:#bfeff7;font-weight:700}
-  .loader-sub{color:var(--muted);font-size:13px;margin-top:4px}
-  @media(max-width:920px){ .flex{flex-direction:column} .left{flex-basis:auto} }
+  :root{
+    --bg:#020617;
+    --panel: rgba(255,255,255,0.035);
+    --muted:#cbe8f7;
+    --neon-cyan:#00f0ff;
+    --neon-mag:#d39bff;
+    --radius:12px;
+    --container:1150px;
+    --tile-icon-bg: linear-gradient(135deg, rgba(0,240,255,0.12), rgba(195,130,252,0.08));
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;
+    background:linear-gradient(180deg,#01040a 0%, #020617 100%);
+    color:#e6f7ff;
+    font-family:Inter, system-ui, sans-serif;
+    -webkit-font-smoothing:antialiased;
+    -moz-osx-font-smoothing:grayscale;
+  }
+  .wrap{max-width:var(--container);margin:24px auto;padding:20px}
+  header{display:flex;align-items:center;justify-content:space-between;gap:12px}
+  .brand{display:flex;align-items:center;gap:14px}
+  .logo{width:64px;height:64px;border-radius:12px;background:linear-gradient(135deg,var(--neon-cyan),var(--neon-mag));display:flex;align-items:center;justify-content:center;font-family:Orbitron;color:#00141a;font-weight:700}
+  nav a{color:var(--muted);text-decoration:none;margin-left:10px;padding:8px;border-radius:8px}
+
+/* hero CTA */
+  .hero-cta { margin-top:14px; display:flex;justify-content:center }
+  .hero-cta .cta-btn {
+    padding:14px 28px;border-radius:999px;border:0;background:linear-gradient(90deg,var(--neon-cyan),var(--neon-mag));color:#00141a;font-weight:800;cursor:pointer;box-shadow: 0 14px 40px rgba(0,120,140,0.14), 0 4px 14px rgba(0,0,0,0.45);
+  }
+
+/* Home tiles */
+  .home{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:18px;margin-top:28px}
+  .tile{
+    position:relative;
+    overflow:hidden;
+    background:linear-gradient(180deg,rgba(255,255,255,0.025),rgba(255,255,255,0.01));
+    border-radius:14px;
+    padding:18px 16px;
+    cursor:pointer;
+    text-align:center;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.01);
+    transition:transform .18s ease, box-shadow .18s ease, box-shadow .2s ease;
+    transform: translateZ(0);
+    border:1px solid rgba(255,255,255,0.06);
+    display:flex;flex-direction:column;align-items:center;gap:8px;
+    min-height:150px;
+  }
+  .tile:focus{ outline: none; box-shadow: 0 14px 40px rgba(0,0,0,0.7), 0 0 20px rgba(0,240,255,0.06); transform: translateY(-6px) scale(1.01); }
+  .tile:hover{ transform: translateY(-6px) scale(1.01); box-shadow: 0 18px 40px rgba(0,0,0,0.7); }
+/* consistent icon circle */
+  .tile .icon {
+    width:56px;height:56px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;
+    background:var(--tile-icon-bg); border:1px solid rgba(255,255,255,0.03);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.45), 0 0 12px rgba(0,240,255,0.02);
+  }
+  .tile h3{margin:6px 0;color:var(--neon-cyan);font-family:Orbitron;font-size:15px}
+  .tile p{color:var(--muted);font-size:13px;margin:0;line-height:1.25}
+
+/* subtle neon border */
+  .tile::before{
+    content:"";
+    position:absolute; inset:0;
+    border:2px solid rgba(0,240,255,0.06);
+    border-radius:16px;
+    opacity:0.35;
+    filter:drop-shadow(0 0 6px rgba(0,240,255,0.06));
+    pointer-events:none;
+    transform:skew(-2deg,-1deg);
+    transition:opacity .18s ease, filter .18s ease;
+  }
+  .tile:hover::before{ opacity:0.75; filter: drop-shadow(0 0 12px rgba(0,240,255,0.12)); }
+
+/* Tool page container */
+  .tool-page{
+    display:none;
+    margin-top:24px;
+    padding:22px;
+    border-radius:12px;
+    background:var(--panel);
+    border:1px solid rgba(0,255,255,0.08);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.55);
+  }
+  .tool-page.active{display:block}
+
+  .file-input{
+    margin-top:12px;
+    padding:14px;
+    border-radius:10px;
+    background: rgba(255,255,255,0.01);
+    border:1px dashed rgba(0,255,255,0.09);
+    text-align:center;
+    color:var(--muted);
+  }
+
+  .controls-row{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:10px}
+  .controls-row label{min-width:120px;color:var(--muted)}
+
+  button.primary, button.generate, button.download, button.reset, button.copy {
+    margin-top:10px;
+    padding:10px 16px;
+    border-radius:10px;
+    border:0;
+    background:linear-gradient(90deg,var(--neon-cyan),var(--neon-mag));
+    color:#00141a;
+    font-weight:700;
+    cursor:pointer;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.45);
+  }
+  button.reset{ background:transparent;color:var(--muted);border:1px solid rgba(255,255,255,0.06);padding:8px 12px }
+  button.copy{ background:linear-gradient(90deg,#6fb4ff,#8ab0ff); color:#001; box-shadow:none; font-weight:600 }
+
+  select,input,textarea{
+    padding:10px;border-radius:8px;
+    border:1px solid rgba(255,255,255,0.12);
+    background:#071226;
+    color:#eaf6ff;
+    width:100%;
+    margin-top:8px;
+    outline: none;
+    transition: box-shadow .12s ease, border-color .12s ease;
+  }
+  textareasmall{min-height:80px}
+  select.small, input.small{ width:150px }
+
+  select:focus,input:focus,textarea:focus{
+    border-color: rgba(0,255,255,0.38);
+    box-shadow: 0 0 12px rgba(0,255,255,0.06);
+  }
+
+  .back{
+    background:transparent;
+    color:var(--muted);
+    border:1px solid rgba(255,255,255,0.06);
+    padding:8px 12px;border-radius:8px;
+    cursor:pointer;
+  }
+
+/* 500x500 previews */
+  .res500-wrap{display:flex;gap:18px;align-items:flex-start;flex-wrap:wrap}
+  .controls{flex:1;min-width:300px}
+  .preview-box{width:520px;display:flex;flex-direction:column;gap:10px;align-items:center}
+  .canvas-frame{width:500px;height:500px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:#071226;display:flex;align-items:center;justify-content:center;overflow:hidden;box-shadow:0 8px 28px rgba(0,0,0,0.6)}
+  .meta{color:var(--muted);font-size:13px}
+
+/* Link Shuffle specific styling integrated with theme */
+  .shuffle-container { max-width:980px;margin:0 auto; }
+  .shuffle-card {
+    background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+    border-radius:10px;padding:18px;border:1px solid rgba(0,255,255,0.06);
+  }
+  .shuffle-card h1 { font-family:Orbitron;color:var(--neon-cyan);font-size:22px;margin-bottom:8px }
+  .section-title { color:var(--neon-cyan); font-weight:700; display:flex;align-items:center;gap:8px;margin-bottom:8px }
+  .meta-row { color:var(--muted); font-size:13px; display:flex; justify-content:space-between; margin-top:8px; }
+
+  .btn {
+    display:inline-block;
+    width:100%;
+    text-align:center;
+    background: linear-gradient(90deg,var(--neon-cyan),var(--neon-mag));
+    color:#00141a;
+    font-weight: 700;
+    padding: 12px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    border: none;
+    letter-spacing: 1px;
+  }
+  .small-btn {
+    background: linear-gradient(90deg,#6fb4ff,#7ecbff);
+    color: #001;
+    border-radius: 6px;
+    padding: 8px 12px;
+    border: none;
+    cursor: pointer;
+    font-weight:700;
+  }
+  .count-bubble {
+    background: rgba(255,255,255,0.02);
+    padding: 6px 10px;
+    border-radius: 6px;
+    color: var(--muted);
+    font-weight: 600;
+  }
+
+/* 2048x1152 resizer tweaks */
+  #resizer2048 { padding: 28px; border-radius: 14px; background: linear-gradient(180deg, rgba(255,255,255,0.014), rgba(255,255,255,0.01)); border: 1px solid rgba(0,255,255,0.06); box-shadow: 0 10px 40px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.012); position: relative; }
+  #resizer2048 .panel { border-radius: 12px; padding: 18px; margin-top: 12px; background: linear-gradient(180deg, rgba(0,0,0,0.18), rgba(255,255,255,0.01)); border: 1px solid rgba(255,255,255,0.03); box-shadow: 0 8px 24px rgba(0,0,0,0.6), 0 0 30px rgba(0,240,255,0.02); }
+  #resizer2048 .row { display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-top:12px; }
+  #resizer2048 label { color:var(--muted); min-width:120px; }
+  #resizer2048 select, #resizer2048 input[type="number"] { max-width: 260px; background: linear-gradient(180deg, #061426, #071226); border: 1px solid rgba(255,255,255,0.06); padding:10px 12px; }
+  #resizer2048 .actions { margin-top:16px; display:flex; gap:10px; align-items:center; }
+  #resizer2048 .generate { padding:12px 18px; border-radius:12px; font-weight:800; letter-spacing:0.6px; box-shadow: 0 8px 30px rgba(0,0,0,0.5); }
+  #resizer2048 #download2048 { padding:12px 14px; border-radius:12px; border: 1px solid rgba(255,255,255,0.06); background: linear-gradient(90deg,var(--neon-cyan),var(--neon-mag)); color:#00141a; font-weight:700; display:none; box-shadow: 0 8px 30px rgba(0,0,0,0.55); }
+  #resizer2048 .preview-card { margin-top:18px; display:flex; gap:16px; align-items:flex-start; flex-wrap:wrap; }
+  #resizer2048 .preview-card img { border-radius:10px; max-width:420px; border:1px solid rgba(255,255,255,0.04); box-shadow: 0 14px 40px rgba(0,0,0,0.6); }
+  #resizer2048 .meta { color:var(--muted); font-size:13px; }
+  #resizer2048::before{ content:""; position:absolute; left:12px; top:12px; width:72px; height:24px; border-radius:8px; background: linear-gradient(90deg, rgba(0,240,255,0.06), rgba(192,132,252,0.03)); box-shadow: 0 6px 24px rgba(0,240,255,0.03); pointer-events:none; }
+
+  footer{margin-top:24px;color:var(--muted);text-align:center}
+  @media(max-width:1100px){ .preview-box{width:100%;order:2} .controls{order:1} .res500-wrap{flex-direction:column} }
+  @media(max-width:900px){.home{grid-template-columns:repeat(2,1fr)} .preview-wrap{flex-direction:column}}
+
+/* refined footer to match the example look + improved spacing and hover */
+  .site-footer{
+    width:100%;
+    background:#0b0e15;
+    border-top:1px solid rgba(255,255,255,0.03);
+    padding:28px 18px;
+    color:var(--muted);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.01);
+    margin-top:28px;
+    border-radius:8px;
+  }
+  .site-footer .footer-inner{ max-width:var(--container); margin:0 auto; display:flex; align-items:center; justify-content:space-between; gap:18px; }
+  .site-footer .footer-left{ display:flex; flex-direction:column; }
+  .site-footer .footer-brand{ font-family:Orbitron; color:var(--neon-cyan); font-size:56px; line-height:1; letter-spacing:2px; display:flex;align-items:center;gap:12px }
+  .site-footer .footer-logo{ width:48px;height:48px;border-radius:10px;background:linear-gradient(135deg,var(--neon-cyan),var(--neon-mag)); display:inline-flex;align-items:center;justify-content:center;font-family:Orbitron;color:#00141a;font-weight:700 }
+  .site-footer .footer-copy{ color:#8fa3c2; font-size:13px; margin-top:6px }
+
+  .site-footer .footer-nav{ display:flex; gap:28px; align-items:center; justify-content:center; flex:1; }
+  .site-footer .footer-nav a{ color:#9fb0c8; text-decoration:none; font-size:14px; padding:10px 14px; position:relative; transition: color .12s ease, transform .12s ease; border-radius:8px; }
+  .site-footer .footer-nav a:not(:last-child){ margin-right:12px }
+
+  .site-footer .footer-nav a:hover,
+  .site-footer .footer-nav a:focus{
+    color: var(--neon-cyan);
+    transform: translateY(-2px);
+    outline: none;
+    text-decoration: underline 1px solid rgba(0,240,255,0.08);
+  }
+
+  .site-footer .footer-nav a + a::before{
+    content:""; width:1px; height:16px; background:rgba(255,255,255,0.04); display:inline-block; vertical-align:middle; margin:0 12px;
+  }
+
+  .site-footer .footer-right{ display:flex; gap:10px; align-items:center }
+  .site-footer .social{ display:inline-flex; width:34px; height:34px; align-items:center; justify-content:center; border-radius:50%; background:transparent; border:1px solid rgba(255,255,255,0.04); color:#9fb0c8; text-decoration:none; font-weight:700; transition: all .12s ease; }
+  .site-footer .social:hover{ background:rgba(0,240,255,0.06); color:var(--neon-cyan); border-color:rgba(0,240,255,0.12); transform: translateY(-2px) }
+
+/* Footer modal/panel for pages */
+  .doc-panel{ position:fixed; right:20px; bottom:20px; width:420px; max-width:calc(100% - 40px); background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border-radius:12px; padding:18px; box-shadow: 0 16px 50px rgba(0,0,0,0.6); border:1px solid rgba(255,255,255,0.03); display:none; z-index:1200 }
+  .doc-panel.active{ display:block }
+  .doc-panel h3{ margin:0 0 8px 0; font-family:Orbitron; color:var(--neon-cyan) }
+  .doc-panel .doc-content{ color:var(--muted); font-size:14px; line-height:1.5 }
+  .doc-panel .close-doc{ position:absolute; right:8px; top:8px; background:transparent;border:0;color:var(--muted);cursor:pointer }
+
+/* --------------------------
+   FIXES: footer alignment improvements
+   (ensures About / Contact / Terms / Privacy align vertically centered)
+   -------------------------- */
+  .site-footer .footer-inner {
+    display: flex;
+    align-items: center;        /* vertical center everything */
+    justify-content: space-between;
+    gap: 18px;
+  }
+  .site-footer .footer-left { 
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .site-footer .footer-nav {
+    display: flex;
+    align-items: center;     /* vertical center nav links */
+    gap: 28px;
+    flex: 1;
+    justify-content: center; /* keeps links centered between brand and socials */
+    white-space: nowrap;     /* avoid accidental wrapping */
+  }
+  .site-footer .footer-nav a {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 10px;      /* smaller vertical padding avoids offset */
+    line-height: 1;         
+  }
+  .site-footer .footer-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  @media (max-width: 980px) {
+    .site-footer .footer-inner { flex-direction: column; align-items: center; text-align:center; }
+    .site-footer .footer-nav { white-space: normal; gap:12px; flex-wrap:wrap; justify-content:center; }
+    .site-footer .footer-brand { font-size:42px; }
+  }
+
+/* focus ring for interactive buttons/tiles for keyboard users */
+  .tile, button, .btn, .small-btn, .copy { outline-offset:3px; }
+  .tile:focus-visible, button:focus-visible, .btn:focus-visible { box-shadow: 0 0 0 4px rgba(0,240,255,0.06), 0 16px 36px rgba(0,0,0,0.6); border-radius:12px; }
+
+  /* small contrast bump for small text & footer links */
+  .tile p, .meta, .site-footer .footer-nav a { color: #cbe8f7; }
+
+  /* CTA mobile adjustments */
+  @media(max-width:700px){
+    .hero-cta { padding: 10px; }
+    .hero-cta .cta-btn { width:90%; font-size:15px; display:block; margin:0 auto; }
+  }
+
+  /* reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    .tile, .tile * { transition: none !important; animation: none !important; transform: none !important; }
+    html { scroll-behavior: auto; }
+  }
+
 </style>
 </head>
 <body>
-<div class="wrap">
-  <h1>Passport Maker Tools — </h1>
-
-  <div class="panel">
-    <div class="flex">
-      <div class="left">
-        <label>Upload portrait</label>
-        <input id="file" type="file" accept="image/*">
-        <div style="height:12px"></div>
-        <div class="canvas-wrap">
-          <canvas id="preview" width="360" height="456"></canvas>
+  <div class="wrap">
+    <header>
+      <div class="brand">
+        <div style="display:flex;flex-direction:column;gap:4px">
+          <div style="font-family:Orbitron;color:var(--neon-cyan);font-size:20px;letter-spacing:0.6px">PixelKit</div>
+          <div style="color:var(--muted);font-size:13px">Neon • Fast</div>
         </div>
-        <div style="height:10px"></div>
-        <div class="muted">Preview (export 450×570)</div>
+      </div>
+      <nav>
+        <a href="#home" onclick="showHome();return false;">Home</a>
+      </nav>
+    </header>
+
+    <!-- HOME -->
+    <main id="homeView">
+      <section style="margin-bottom:12px;padding:24px 0;text-align:center;">
+        <h1 style="font-family:Orbitron;font-size:34px;color:var(--neon-cyan);margin:0;">
+          Welcome to PixelKit.com
+        </h1>
+        <p style="color:#7dd3fc;font-size:16px;margin-top:8px;max-width:700px;margin-left:auto;margin-right:auto;line-height:1.5;">
+          Fast, powerful & elegant tools for creators, designers and editors.
+        </p>
+
+        <!-- Primary CTA -->
+        <div class="hero-cta">
+          <button class="cta-btn" onclick="showTool('resizer2048')">Try Tools — Start with Cover Maker</button>
+        </div>
+      </section>
+
+      <h2 style="color:var(--neon-cyan);font-family:Orbitron">Tools</h2>
+      <div class="home" role="list">
+        <!-- tiles with SVG icons (consistent stroke style) -->
+        <div class="tile" role="button" tabindex="0" aria-label="Open URL to HTML tool" onclick="showTool('urltool')">
+          <div class="icon" aria-hidden="true">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#cfefff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M10 14a3 3 0 0 1 0-4l1-1a3 3 0 0 1 4.24 0l1 1a3 3 0 0 1 0 4.24l-1 1"/>
+              <path d="M14 10a3 3 0 0 1 0 4l-1 1a3 3 0 0 1-4.24 0l-1-1a3 3 0 0 1 0-4.24l1-1"/>
+            </svg>
+          </div>
+          <h3>URL → HTML</h3>
+          <p>Paste URLs → anchor tags</p>
+        </div>
+
+        <div class="tile" role="button" tabindex="0" aria-label="Open Link Shuffle" onclick="showTool('linkShuffle')">
+          <div class="icon" aria-hidden="true">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#cfefff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 7L9 19"/>
+              <path d="M21 7h-7v7"/>
+            </svg>
+          </div>
+          <h3>Link Shuffle</h3>
+          <p>Shuffle & copy URL list</p>
+        </div>
+
+        <div class="tile" role="button" tabindex="0" aria-label="Open Description Shorter" onclick="showTool('descShorter')">
+          <div class="icon" aria-hidden="true">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#cfefff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 12h18"/>
+              <path d="M10 6h11"/>
+              <path d="M10 18h11"/>
+              <path d="M6 8l4 8"/>
+            </svg>
+          </div>
+          <h3>Desc Shorter</h3>
+          <p>Shorten descriptions</p>
+        </div>
+
+        <div class="tile" role="button" tabindex="0" aria-label="Open Logo Maker 500x500" onclick="showTool('resizer500')">
+          <div class="icon" aria-hidden="true">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#cfefff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="18" height="18" rx="2"/>
+              <path d="M8 14s1-2 4-2 4 2 4 2"/>
+              <path d="M9 9h.01M15 9h.01"/>
+            </svg>
+          </div>
+          <h3>Logo Maker (500×500)</h3>
+          <p>Interactive resize & position</p>
+        </div>
+
+        <div class="tile" role="button" tabindex="0" aria-label="Open Cover Maker 2048x1152" onclick="showTool('resizer2048')">
+          <div class="icon" aria-hidden="true">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#cfefff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="6" width="18" height="12" rx="2"/>
+              <path d="M3 12h18"/>
+              <circle cx="8.5" cy="10.5" r="1.2"/>
+            </svg>
+          </div>
+          <h3>Cover Maker (2048×1152)</h3>
+          <p>Fit / crop photos to exact size</p>
+        </div>
+
+        <div class="tile" role="button" tabindex="0" aria-label="Open Image Resizer Pro" onclick="showTool('resizer')">
+          <div class="icon" aria-hidden="true">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#cfefff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 16V8a2 2 0 0 0-2-2h-4"/><path d="M3 8v8a2 2 0 0 0 2 2h4"/>
+              <path d="M7 12h10"/>
+            </svg>
+          </div>
+          <h3>Image Resizer Pro</h3>
+          <p>Resize to any px / in / cm</p>
+        </div>
+
+        <div class="tile" role="button" tabindex="0" aria-label="Open ImgConvert" onclick="showTool('converter')">
+          <div class="icon" aria-hidden="true">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#cfefff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 12v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h6"/>
+              <path d="M17 7l4-4M21 7v-4h-4"/>
+            </svg>
+          </div>
+          <h3>ImgConvert</h3>
+          <p>PNG ⇆ JPG ⇆ WEBP</p>
+        </div>
+
+        <div class="tile" role="button" tabindex="0" aria-label="Open ImgCompressor" onclick="showTool('compressor')">
+          <div class="icon" aria-hidden="true">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#cfefff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2v6M12 22v-6"/>
+              <path d="M5 7l6 4 6-4"/>
+              <path d="M5 17l6-4 6 4"/>
+            </svg>
+          </div>
+          <h3>ImgCompressor</h3>
+          <p>Reduce filesize with quality control</p>
+        </div>
+      </div>
+    </main>
+
+    <!-- RESIZER (basic) -->
+    <section id="resizer" class="tool-page" aria-hidden="true">
+      <button class="back" onclick="showHome()">← Back to Tools</button>
+      <h2 style="color:var(--neon-cyan);font-family:Orbitron">Image Resizer Pro</h2>
+      <div class="file-input"><input type="file" id="resizeFile" accept="image/*" aria-label="Choose image to resize"></div>
+      <label>Width (px)</label><input type="number" id="w" placeholder="e.g. 800" value="500">
+      <label>Height (px)</label><input type="number" id="h" placeholder="e.g. 500" value="500">
+
+      <div class="controls-row">
+        <label>Output format</label>
+        <select id="outFormat" class="small" aria-label="Output format">
+          <option value="image/png">PNG (keep transparency)</option>
+          <option value="image/jpeg">JPG</option>
+          <option value="image/webp">WEBP</option>
+        </select>
+
+        <label>Background</label>
+        <select id="bgFill" class="small" aria-label="Background fill">
+          <option value="transparent">Transparent (when PNG)</option>
+          <option value="#ffffff">White</option>
+          <option value="#000000">Black</option>
+          <option value="#0a3bff">Blue</option>
+        </select>
+
+        <label>Quality</label>
+        <input id="outQuality" class="small" type="number" min="10" max="100" value="90">
       </div>
 
-      <div class="right">
+      <div style="margin-top:14px">
+        <button class="generate" onclick="generateResized()">Generate</button>
+        <button id="downloadBtn" class="download" style="display:none;margin-left:8px" onclick="downloadResized()">Download</button>
+        <span id="status" style="margin-left:12px;color:var(--muted)"></span>
+      </div>
+
+      <div class="preview-wrap" id="resPreview" style="display:none">
+        <img id="resPreviewImg" class="preview-img" alt="Resized preview image">
+        <div class="meta">
+          <div class="muted">Original:</div>
+          <div id="origMeta" class="muted" style="margin-bottom:8px"></div>
+          <div class="muted">Generated:</div>
+          <div id="genMeta" class="muted" style="margin-bottom:8px"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CONVERTER -->
+    <section id="converter" class="tool-page" aria-hidden="true">
+      <button class="back" onclick="showHome()">← Back to Tools</button>
+      <h2 style="color:var(--neon-cyan);font-family:Orbitron">ImgConvert</h2>
+      <div class="file-input"><input type="file" id="convertFile" accept="image/*" aria-label="Choose file to convert"></div>
+      <label>Convert To</label>
+      <select id="format" aria-label="Convert to format">
+        <option value="image/png">PNG</option>
+        <option value="image/jpeg">JPG</option>
+        <option value="image/webp">WEBP</option>
+      </select>
+      <button onclick="convertImage()">Convert</button>
+      <div id="convertResult" style="margin-top:12px"></div>
+    </section>
+
+    <!-- COMPRESSOR -->
+    <section id="compressor" class="tool-page" aria-hidden="true">
+      <button class="back" onclick="showHome()">← Back to Tools</button>
+      <h2 style="color:var(--neon-cyan);font-family:Orbitron">ImgCompressor</h2>
+      <div class="file-input"><input type="file" id="compressFile" accept="image/*" aria-label="Choose file to compress"></div>
+      <label>Quality (1–100)</label><input type="number" id="quality" value="70" min="1" max="100">
+      <button onclick="compressImage()">Compress</button>
+      <div id="compressResult" style="margin-top:12px"></div>
+    </section>
+
+    <!-- URL → HTML (advanced) -->
+    <section id="urltool" class="tool-page" aria-hidden="true">
+      <button class="back" onclick="showHome()">← Back to Tools</button>
+      <h2 style="color:var(--neon-cyan);font-family:Orbitron">URL → HTML Converter</h2>
+
+      <div class="form-row">
+        <label class="muted">Options</label>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:8px;align-items:center">
+          <label style="color:var(--muted)"><input type="checkbox" id="optNewTab" checked> Open in new tab (<code>target="_blank"</code>)</label>
+          <label style="color:var(--muted)"><input type="checkbox" id="optRel"> Add <code>rel="noopener noreferrer"</code></label>
+          <label style="color:var(--muted)"><input type="checkbox" id="optAutoText"> Use domain as link text</label>
+        </div>
+
+        <div style="margin-top:10px;color:var(--muted)">
+          Output format:
+          <label style="margin-left:12px"><input type="radio" name="outFmt" value="lines" checked> One link per line</label>
+          <label style="margin-left:12px"><input type="radio" name="outFmt" value="p"> Wrap all links in single &lt;p&gt; with &lt;br&gt;</label>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <label class="muted">Paste your list of URLs below</label>
+        <textarea id="urlInput" placeholder="https://example.com/page1
+https://example.net/article
+..." aria-label="Paste URLs here"></textarea>
+      </div>
+
+      <div style="margin-top:10px">
+        <button class="primary" onclick="convertURLAdvanced()">Convert</button>
+        <button class="reset" onclick="resetURLTool()">Reset</button>
+        <span id="urlStatus" style="margin-left:12px;color:var(--muted)"></span>
+      </div>
+
+      <div class="form-row" style="margin-top:16px">
+        <label class="muted">URLs Converted into HTML Links Code</label>
+        <textarea id="urlOutput" readonly placeholder="Converted HTML will appear here..." aria-label="Converted HTML output"></textarea>
+      </div>
+
+      <div style="margin-top:10px">
+        <button class="copy" onclick="copyUrlOutput()">Copy to Clipboard</button>
+      </div>
+    </section>
+
+    <!-- 2048x1152 Resizer (enhanced UI) -->
+    <section id="resizer2048" class="tool-page" aria-hidden="true">
+      <button class="back" onclick="showHome()">← Back to Tools</button>
+      <h2 style="color:var(--neon-cyan);font-family:Orbitron">2048 × 1152 Cover Maker</h2>
+
+      <div class="panel">
+        <div class="file-input">
+          <input type="file" id="file2048" accept="image/*" aria-label="Choose image for 2048x1152">
+          <div style="margin-top:8px;color:var(--muted);font-size:13px">Supported: PNG / JPG / WEBP — client-side</div>
+        </div>
+
+        <div class="row">
+          <label>Mode</label>
+          <select id="mode2048">
+            <option value="fit">Fit (preserve aspect, max 2048×1152)</option>
+            <option value="crop">Crop (center → exact 2048×1152)</option>
+          </select>
+
+          <label>Output format</label>
+          <select id="outfmt2048">
+            <option value="image/png">PNG</option>
+            <option value="image/jpeg">JPG</option>
+            <option value="image/webp">WEBP</option>
+          </select>
+
+          <label>Quality (JPG/WEBP)</label>
+          <input id="outq2048" type="number" min="10" max="100" value="92">
+        </div>
+
+        <div class="actions">
+          <button class="generate" onclick="generate2048()">Generate 2048×1152</button>
+          <button id="download2048" onclick="downloadGenerated()">Download</button>
+          <span id="status2048" style="margin-left:12px;color:var(--muted)"></span>
+        </div>
+
+        <div class="preview-card" id="previewWrap" style="display:none">
+          <img id="previewImg" class="preview-img" alt="Generated cover preview">
+          <div>
+            <div class="meta"><strong style="color:var(--neon-cyan)">Original</strong></div>
+            <div id="origMeta2048" class="meta" style="margin-bottom:10px"></div>
+
+            <div class="meta"><strong style="color:var(--neon-cyan)">Generated</strong></div>
+            <div id="genMeta2048" class="meta" style="margin-bottom:8px"></div>
+
+            <div id="hint2048" class="meta">Tip: use "Crop" for exact wallpaper-sized output.</div>
+          </div>
+        </div>
+
+        <div id="canvasContainer" style="display:none"></div>
+      </div>
+    </section>
+
+    <!-- 500x500 Interactive Resizer -->
+    <section id="resizer500" class="tool-page" aria-hidden="true">
+      <button class="back" onclick="showHome()">← Back to Tools</button>
+      <h2 style="color:var(--neon-cyan);font-family:Orbitron">500 × 500 Logo Maker</h2>
+
+      <div class="res500-wrap">
         <div class="controls">
-          <div>
-            <label>Actions</label>
-            <div class="big-buttons">
-              <button id="btnRemove" class="big remove">Remove Background</button>
-              <button id="btnPassport" class="big passport">Passport size & Color make</button>
+          <div class="file-input">
+            <input type="file" id="file500" accept="image/*" aria-label="Choose image for logo">
+            <div style="margin-top:8px;color:var(--muted);font-size:13px">Supported: PNG, JPG, WEBP — processed locally</div>
+          </div>
+
+          <div class="controls-row" style="margin-top:12px">
+            <label>Background</label>
+            <select id="bg500" class="small">
+              <option value="transparent">Transparent (PNG)</option>
+              <option value="#ffffff">White</option>
+              <option value="#000000">Black</option>
+              <option value="#0a3bff">Blue</option>
+              <option value="custom">Custom HEX</option>
+            </select>
+            <input id="bgCustom500" class="small" placeholder="#f0f0f0" style="display:none;margin-left:6px">
+          </div>
+
+          <div class="controls-row">
+            <label>Output format</label>
+            <select id="fmt500" class="small">
+              <option value="image/png">PNG</option>
+              <option value="image/jpeg">JPG</option>
+              <option value="image/webp">WEBP</option>
+            </select>
+
+            <label>Quality (JPG/WEBP)</label>
+            <input id="q500" class="small" type="number" min="10" max="100" value="92">
+          </div>
+
+          <div style="margin-top:14px">
+            <label class="muted">Zoom</label>
+            <div style="display:flex;align-items:center;gap:12px;margin-top:6px">
+              <input id="zoom500" type="range" min="0.1" max="3" step="0.01" value="1">
+              <div class="meta" id="zoomVal500">100%</div>
             </div>
-            <div class="hint" style="margin-top:8px">Remove → produce removed PNG (manual download). Passport → composite and enable passport downloads.</div>
           </div>
 
-          <div>
-            <label>Background (passport composite)</label>
-            <div class="row" style="align-items:center">
-              <select id="bgSel">
-                <option value="#6ba0e6">Studio color</option>
-                <option value="#5d8fe0">Passport blue (old)</option>
-                <option value="#5a8bd1">Sample blue 2</option>
-                <option value="#4f88c2">Sample blue 3</option>
-                <option value="custom">Custom / pick from image</option>
-              </select>
-              <input id="bgColor" type="color" value="#6ba0e6" style="display:none;margin-left:8px">
+          <div style="margin-top:10px">
+            <label class="muted">Rotate (°)</label>
+            <div style="display:flex;align-items:center;gap:12px;margin-top:6px">
+              <input id="rot500" type="range" min="-180" max="180" step="1" value="0">
+              <div class="meta" id="rotVal500">0°</div>
             </div>
-            <div style="height:8px"></div>
-            <button id="pickFromImg" class="small">Pick color from original image</button>
           </div>
 
-          <div>
-            <label>Adjustments</label>
-            <div class="row"><div style="width:110px;color:var(--muted)">Brightness</div><input id="brightness" type="range" min="-80" max="80" value="6"><div class="muted" id="bVal">+6</div></div>
-            <div class="row"><div style="width:110px;color:var(--muted)">Contrast</div><input id="contrast" type="range" min="-80" max="80" value="6"><div class="muted" id="cVal">+6</div></div>
-            <div class="row"><div style="width:110px;color:var(--muted)">Feather</div><input id="feather" type="range" min="0" max="30" value="6"><div class="muted" id="fVal">6px</div></div>
-          </div>
-
-          <div>
-            <label>Downloads</label>
-            <div class="dl-row">
-              <button id="dlRemoved" class="dl removed" disabled>Download Removed PNG</button>
-              <button id="dlPng" class="dl png" disabled>Download PNG</button>
-              <button id="dlJpg" class="dl jpg" disabled>Download JPG</button>
-              <button id="dlPsd" class="dl psd" disabled>Download PSD</button>
+          <div style="margin-top:10px">
+            <label class="muted">Position X</label>
+            <div style="display:flex;align-items:center;gap:12px;margin-top:6px">
+              <input id="posX500" type="range" min="-500" max="500" step="1" value="0">
+              <div class="meta" id="posXVal500">0 px</div>
             </div>
-            <div style="height:8px"></div>
-            <button id="reset" class="small">Reset</button>
           </div>
 
+          <div style="margin-top:10px">
+            <label class="muted">Position Y</label>
+            <div style="display:flex;align-items:center;gap:12px;margin-top:6px">
+              <input id="posY500" type="range" min="-500" max="500" step="1" value="0">
+              <div class="meta" id="posYVal500">0 px</div>
+            </div>
+          </div>
+
+          <div style="margin-top:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+            <button class="primary" id="gen500">Generate</button>
+            <button class="download" id="dl500" style="display:none">Download</button>
+            <button class="reset" id="reset500">Reset</button>
+            <span id="status500" style="margin-left:10px;color:var(--muted)"></span>
+          </div>
+        </div>
+
+        <div class="preview-box">
+          <div class="canvas-frame">
+            <canvas id="canvas500" width="500" height="500" style="display:block" aria-label="Preview canvas for logo"></canvas>
+          </div>
+          <div style="width:100%;display:flex;justify-content:space-between;align-items:center">
+            <div class="meta" id="origInfo500"></div>
+            <div class="meta" id="outInfo500"></div>
+          </div>
         </div>
       </div>
+    </section>
+
+    <!-- Description Shorter -->
+    <section id="descShorter" class="tool-page" aria-hidden="true">
+      <button class="back" onclick="showHome()">← Back to Tools</button>
+      <h2 style="color:var(--neon-cyan);font-family:Orbitron">Description Shorter</h2>
+
+      <div style="margin-top:12px" class="file-input">
+        <div style="color:var(--muted);font-size:13px">Paste your long description below — choose limit and mode, then click Shorten.</div>
+      </div>
+
+      <div style="margin-top:12px">
+        <label class="muted">Original description</label>
+        <textarea id="descInput" placeholder="Paste full description here..." style="width:100%;height:140px;background:#071226;color:#eaf6ff;border-radius:8px;padding:10px"></textarea>
+      </div>
+
+      <div class="controls-row" style="margin-top:12px;align-items:center">
+        <label class="muted">Max characters</label>
+        <input id="charLimit" type="number" min="10" value="160" class="small" style="max-width:140px">
+        <label class="muted" style="margin-left:12px">Mode</label>
+        <select id="shortMode" class="small">
+          <option value="hard">Hard truncate (cut exactly)</option>
+          <option value="word" selected>Word-aware (don't break words)</option>
+          <option value="sentence">Sentence-aware (keep full sentences)</option>
+        </select>
+
+        <label style="margin-left:12px" class="muted"><input type="checkbox" id="addEllipsis" checked> Add "..." if shortened</label>
+      </div>
+
+      <div style="margin-top:14px">
+        <button class="primary" onclick="shortenDescription()">Shorten</button>
+        <button class="reset" onclick="resetDescTool()" style="margin-left:8px">Reset</button>
+        <span id="descStatus" style="margin-left:12px;color:var(--muted)"></span>
+      </div>
+
+      <div style="margin-top:14px">
+        <label class="muted">Shortened result</label>
+        <textarea id="descOutput" readonly style="width:100%;height:120px;background:#071226;color:#eaf6ff;border-radius:8px;padding:10px"></textarea>
+      </div>
+
+      <div style="margin-top:10px">
+        <button class="copy" onclick="copyDescOutput()">Copy to Clipboard</button>
+      </div>
+    </section>
+
+    <!-- Link Shuffle -->
+    <section id="linkShuffle" class="tool-page" aria-hidden="true">
+      <button class="back" onclick="showHome()">← Back to Tools</button>
+      <div class="shuffle-container" style="margin-top:12px">
+        <div class="shuffle-card">
+          <h1>RANDOM LINK MIXER</h1>
+
+          <div class="section-title"><span class="icon">🔗</span> Enter URLs (one per line)</div>
+          <textarea id="inputLinks" placeholder="Paste your links here... (one URL per line)" aria-label="Input links"></textarea>
+
+          <div class="meta-row">
+            <div>Characters: <strong id="charCount" style="color:var(--neon-cyan)">0</strong></div>
+            <div style="font-size:13px;color:var(--muted)">Tip: blank lines will be ignored • Ctrl/Cmd+Enter to shuffle</div>
+          </div>
+
+          <div style="margin-top:12px">
+            <button id="shuffleBtn" class="btn">SHUFFLE LINKS</button>
+          </div>
+
+          <div class="output-wrap">
+            <div class="section-title" style="margin-top:12px"><span class="icon">🌐</span> Shuffled URLs</div>
+            <textarea id="outputLinks" placeholder="Shuffled links will appear here..." readonly aria-label="Shuffled output"></textarea>
+
+            <div class="meta-row" style="margin-top:10px">
+              <div>Count: <span id="countNum" class="count-bubble">0</span></div>
+              <div style="display:flex;gap:8px;align-items:center">
+                <button id="copyBtn" class="small-btn">COPY</button>
+                <button id="clearBtn" class="small-btn" style="background:#555;color:#fff;">CLEAR</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="site-footer">
+      <div class="footer-inner">
+        <div class="footer-left">
+          <div style="display:flex;align-items:center;gap:12px">
+            <div class="footer-logo">PK</div>
+            <div>
+              <div class="footer-brand">PixelKit</div>
+              <div class="footer-copy">2025 © All Rights Reserved — PixelKit</div>
+            </div>
+          </div>
+          <div style="margin-top:8px;color:var(--muted);font-size:13px">Email: <a href="mailto:litonshakh5@gmail.com" style="color:var(--neon-cyan);text-decoration:none">litonshakh5@gmail.com</a></div>
+        </div>
+
+        <nav class="footer-nav" aria-label="Footer navigation">
+          <a href="#" onclick="openDoc('about');return false;">About</a>
+          <a href="#" onclick="openDoc('contact');return false;">Contact</a>
+          <a href="#" onclick="openDoc('terms');return false;">Terms &amp; Conditions</a>
+          <a href="#" onclick="openDoc('privacy');return false;">Privacy &amp; Policy</a>
+        </nav>
+
+    
+      </div>
+    </footer>
+
+    <!-- Document panels for footer pages -->
+    <div id="docPanel" class="doc-panel" role="dialog" aria-modal="true" aria-hidden="true">
+      <button class="close-doc" aria-label="Close" onclick="closeDoc()">✕</button>
+      <h3 id="docTitle"></h3>
+      <div class="doc-content" id="docContent"></div>
     </div>
+
   </div>
-</div>
-
-<canvas id="originalCanvas" style="display:none"></canvas>
-
-<div id="overlay" class="overlay" aria-hidden="true">
-  <div class="box" role="status" aria-live="polite">
-    <div class="spinner" aria-hidden="true"></div>
-    <div>
-      <div class="loader-text" id="loaderMain">Processing — please wait…</div>
-      <div class="loader-sub" id="loaderSub">Contacting remove.bg</div>
-    </div>
-  </div>
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/ag-psd@12.0.0/dist/ag-psd.umd.min.js"></script>
 
 <script>
-/*
-  Multi API key handling:
-  - You supplied multiple remove.bg API keys; they are placed in API_KEYS array.
-  - callRemoveBg() will try each key in order until one returns OK.
-*/
+  /* --- Navigation & initial state --- */
+  function showHome(push = true){
+    const home = document.getElementById('homeView');
+    if (home) home.style.display = 'block';
 
-// ---- Put your keys here (I added the ones you gave) ----
-const API_KEYS = [
-  'jDDFFQjTtwEmhRHP1izPBt5B', // previous key (if still valid)
-  'jXyEt5XsWQPmZSS8nuBepW7p',
-  'La7emWvo6NcHSDv3HoLbSRMh'
-];
+    const ids = ['urltool','linkShuffle','descShorter','resizer500','resizer2048','resizer','converter','compressor'];
+    ids.forEach(id=>{
+      const el=document.getElementById(id);
+      if(el){ el.classList.remove('active'); el.setAttribute('aria-hidden','true'); }
+    });
 
-// DOM refs
-const fileInput = document.getElementById('file');
-const btnRemove = document.getElementById('btnRemove');
-const btnPassport = document.getElementById('btnPassport');
-const preview = document.getElementById('preview'), ctx = preview.getContext('2d');
-const origCanvas = document.getElementById('originalCanvas'), origCtx = origCanvas.getContext('2d');
-
-const bgSel = document.getElementById('bgSel'), bgColor = document.getElementById('bgColor'), pickFromImg = document.getElementById('pickFromImg');
-const brightness = document.getElementById('brightness'), contrast = document.getElementById('contrast'), feather = document.getElementById('feather');
-const bVal = document.getElementById('bVal'), cVal = document.getElementById('cVal'), fVal = document.getElementById('fVal');
-
-const dlRemoved = document.getElementById('dlRemoved');
-const dlPng = document.getElementById('dlPng'), dlJpg = document.getElementById('dlJpg'), dlPsd = document.getElementById('dlPsd');
-const resetBtn = document.getElementById('reset');
-
-const overlay = document.getElementById('overlay');
-const loaderMain = document.getElementById('loaderMain'), loaderSub = document.getElementById('loaderSub');
-
-let uploadedFile = null;
-let origImage = null;
-let removedBlob = null;
-let latestPassportCanvas = null;
-let picking = false;
-
-function log(...t){ console.log(...t); }
-
-// UI binds
-bgSel.addEventListener('change', ()=> {
-  bgColor.style.display = bgSel.value === 'custom' ? 'inline-block' : 'none';
-  if(bgSel.value !== 'custom') bgColor.value = bgSel.value;
-  updatePreviewBackground();
-});
-bgColor.addEventListener('input', updatePreviewBackground);
-pickFromImg.addEventListener('click', ()=> {
-  if(!origImage) return alert('Upload image first');
-  picking = true;
-  drawPreviewScaled(origImage);
-  alert('Pick mode: click the preview to sample a color.');
-});
-
-brightness.addEventListener('input', ()=> { bVal.textContent = (brightness.value>0?'+':'')+brightness.value; });
-contrast.addEventListener('input', ()=> { cVal.textContent = (contrast.value>0?'+':'')+contrast.value; });
-feather.addEventListener('input', ()=> { fVal.textContent = feather.value + 'px'; });
-
-// file load
-fileInput.addEventListener('change', e=>{
-  const f = e.target.files[0];
-  if(!f) return;
-  uploadedFile = f;
-  const url = URL.createObjectURL(f);
-  const img = new Image();
-  img.crossOrigin = "anonymous";
-  img.onload = ()=>{
-    origImage = img;
-    drawPreviewScaled(img);
-    origCanvas.width = img.width; origCanvas.height = img.height;
-    origCtx.clearRect(0,0,origCanvas.width, origCanvas.height);
-    origCtx.drawImage(img,0,0);
-    URL.revokeObjectURL(url);
-    log('Loaded', img.width, img.height);
-    updatePreviewBackground();
-  };
-  img.src = url;
-});
-
-function drawPreviewScaled(img){
-  const maxW = 360, maxH = 456;
-  const w = img.width, h = img.height;
-  const ratio = Math.min(maxW/w, maxH/h, 1);
-  const dw = Math.round(w*ratio), dh = Math.round(h*ratio);
-  preview.width = dw; preview.height = dh;
-  ctx.clearRect(0,0,dw,dh);
-  ctx.drawImage(img, 0,0,w,h, 0,0,dw,dh);
-}
-
-preview.addEventListener('click', (ev)=>{
-  if(!picking || !origImage) return;
-  const rect = preview.getBoundingClientRect();
-  const cx = ev.clientX - rect.left, cy = ev.clientY - rect.top;
-  const scaleX = origImage.width / preview.width;
-  const scaleY = origImage.height / preview.height;
-  const ox = Math.floor(cx * scaleX), oy = Math.floor(cy * scaleY);
-  if(ox<0||oy<0||ox>=origCanvas.width||oy>=origCanvas.height) { picking=false; return; }
-  const pd = origCtx.getImageData(ox,oy,1,1).data;
-  const hex = rgbToHex(pd[0],pd[1],pd[2]);
-  bgSel.value = 'custom'; bgColor.style.display = 'inline-block'; bgColor.value = hex;
-  picking = false;
-  drawPreviewScaled(origImage);
-  updatePreviewBackground();
-});
-
-/* update preview background instantly */
-function updatePreviewBackground(){
-  let bg = bgSel.value === 'custom' ? (bgColor.value || '#6ba0e6') : bgSel.value;
-  if(!preview.width || !preview.height){ preview.width = 360; preview.height = 456; }
-  ctx.save();
-  ctx.clearRect(0,0,preview.width,preview.height);
-  ctx.fillStyle = bg;
-  ctx.fillRect(0,0,preview.width,preview.height);
-
-  if(latestPassportCanvas){
-    ctx.drawImage(latestPassportCanvas, 0,0, latestPassportCanvas.width, latestPassportCanvas.height, 0,0, preview.width, preview.height);
-  } else if(origImage){
-    const w = origImage.width, h = origImage.height;
-    const ratio = Math.min(preview.width / w, preview.height / h, 1);
-    const dw = Math.round(w * ratio), dh = Math.round(h * ratio);
-    const dx = Math.round((preview.width - dw)/2), dy = Math.round((preview.height - dh)/2);
-    ctx.drawImage(origImage, 0,0,w,h, dx, dy, dw, dh);
-  }
-  ctx.restore();
-}
-
-/* overlay controls */
-function showLoader(main='Processing — please wait…', sub='Contacting remove.bg'){
-  document.getElementById('overlay').classList.add('show');
-  loaderMain.textContent = main;
-  loaderSub.textContent = sub;
-  btnRemove.classList.add('disabled'); btnPassport.classList.add('disabled');
-  fileInput.disabled = true; pickFromImg.disabled = true; bgSel.disabled = true; bgColor.disabled = true;
-  brightness.disabled = true; contrast.disabled = true; feather.disabled = true;
-  dlRemoved.disabled = true; dlPng.disabled = true; dlJpg.disabled = true; dlPsd.disabled = true;
-}
-function hideLoader(){
-  document.getElementById('overlay').classList.remove('show');
-  btnRemove.classList.remove('disabled'); btnPassport.classList.remove('disabled');
-  fileInput.disabled = false; pickFromImg.disabled = false; bgSel.disabled = false; bgColor.disabled = false;
-  brightness.disabled = false; contrast.disabled = false; feather.disabled = false;
-  if(removedBlob) dlRemoved.disabled = false;
-  if(latestPassportCanvas){ dlPng.disabled = false; dlJpg.disabled = false; dlPsd.disabled = false; }
-}
-
-/* ===== updated remove.bg caller with key rotation =====
-   - Tries each API key from API_KEYS in order.
-   - If response.ok -> returns blob immediately.
-   - If response status indicates auth/error/quota (401/402/403/429/5xx), try next key.
-   - Collects errors for final reporting.
-*/
-async function callRemoveBgWithRotation(file){
-  const url = 'https://api.remove.bg/v1.0/removebg';
-  const errors = [];
-  for(const key of API_KEYS){
-    try{
-      // small UI hint
-      log('Trying remove.bg with key:', key.slice(0,6) + '…');
-      const form = new FormData();
-      form.append('image_file', file);
-      form.append('size', 'auto');
-
-      const controller = new AbortController();
-      const timeoutId = setTimeout(()=> controller.abort(), 70000);
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: { 'X-Api-Key': key },
-        body: form,
-        signal: controller.signal
-      });
-      clearTimeout(timeoutId);
-
-      if(res.ok){
-        log('remove.bg success with key:', key.slice(0,8));
-        return await res.blob();
-      } else {
-        const txt = await res.text().catch(()=> '');
-        const errMsg = `Key ${key.slice(0,6)} failed: ${res.status} ${txt}`;
-        errors.push(errMsg);
-        log(errMsg);
-        // try next key
-        continue;
-      }
-    }catch(err){
-      const s = err && err.name === 'AbortError' ? 'timeout' : (err.message || err);
-      const errMsg = `Key ${key.slice(0,6)} error: ${s}`;
-      errors.push(errMsg);
-      log(errMsg);
-      // try next key
-      continue;
+    if (push) {
+      try { history.pushState({page: 'home'}, '', '#home'); }
+      catch(e){ /* ignore */ }
     }
+    window.scrollTo(0,0);
   }
-  // all keys failed
-  throw new Error('All API keys failed. Details:\\n' + errors.join('\\n'));
-}
 
-/* Button: Remove Background (no auto download) */
-btnRemove.addEventListener('click', async ()=>{
-  if(!uploadedFile) return alert('Choose an image first');
-  try{
-    showLoader('Removing background…', 'Trying API keys');
-    const blob = await callRemoveBgWithRotation(uploadedFile);
-    removedBlob = blob;
-    // show checker + transparent person
-    const img = await blobToImage(blob);
-    drawChecker(preview.width, preview.height, 12);
-    // draw person centered scaled
-    const srcRatio = img.width / img.height;
-    const destRatio = preview.width / preview.height;
-    let drawW, drawH;
-    if(srcRatio > destRatio){
-      drawH = preview.height; drawW = Math.round(img.width * (preview.height / img.height));
+  function showTool(id, push = true){
+    const home = document.getElementById('homeView');
+    if (home) home.style.display = 'none';
+
+    const ids = ['urltool','linkShuffle','descShorter','resizer500','resizer2048','resizer','converter','compressor'];
+    ids.forEach(k=>{
+      const el=document.getElementById(k);
+      if(!el) return;
+      if(k===id){ el.classList.add('active'); el.setAttribute('aria-hidden','false'); } else { el.classList.remove('active'); el.setAttribute('aria-hidden','true'); }
+    });
+
+    if (push) {
+      try { history.pushState({page: id}, '', '#'+id); }
+      catch(e){ /* ignore */ }
+    }
+    window.scrollTo({top:0,behavior:'smooth'});
+  }
+
+  window.addEventListener('popstate', function(event){
+    const state = event.state;
+    if(state && state.page){
+      if(state.page === 'home') showHome(false);
+      else showTool(state.page, false);
+      return;
+    }
+    const hash = (location.hash || '').replace('#','');
+    if(!hash || hash === 'home'){
+      showHome(false);
     } else {
-      drawW = preview.width; drawH = Math.round(img.height * (preview.width / img.width));
+      const el = document.getElementById(hash);
+      if(el) showTool(hash, false);
+      else showHome(false);
     }
-    const dx = Math.round((preview.width - drawW)/2), dy = Math.round((preview.height - drawH)/2);
-    ctx.drawImage(img, dx, dy, drawW, drawH);
-    dlRemoved.disabled = false;
-    hideLoader();
-    log('Removed PNG ready (manual download).');
-  }catch(err){
-    hideLoader();
-    console.error(err);
-    alert('Remove BG failed: ' + (err.message || err));
-  }
-});
-
-/* Use the rotated caller for passport flow as well */
-btnPassport.addEventListener('click', async ()=>{
-  if(!uploadedFile) return alert('Choose an image first');
-  try{
-    showLoader('Creating passport image…', 'Trying API keys');
-    const blob = await callRemoveBgWithRotation(uploadedFile);
-    const personImg = await blobToImage(blob);
-    const passportCanvas = compositePassport(personImg);
-    latestPassportCanvas = passportCanvas;
-    showPassportPreview(passportCanvas);
-    hideLoader();
-    log('Passport ready');
-  }catch(err){
-    hideLoader();
-    console.error(err);
-    alert('Passport creation failed: ' + (err.message || err));
-  }
-});
-
-/* callRemoveBgWithRotation uses blobToImage, downloadBlob etc. */
-function blobToImage(blob){
-  return new Promise((res, rej)=>{
-    const url = URL.createObjectURL(blob);
-    const img = new Image();
-    img.onload = ()=>{ URL.revokeObjectURL(url); res(img); };
-    img.onerror = (e)=>{ URL.revokeObjectURL(url); rej(e); };
-    img.src = url;
   });
-}
-function downloadBlob(blob, filename){
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  setTimeout(()=> URL.revokeObjectURL(a.href), 2000);
-}
 
-/* manual download for removed PNG */
-dlRemoved.addEventListener('click', ()=>{
-  if(!removedBlob) return alert('No removed image available. Click Remove Background first.');
-  downloadBlob(removedBlob, 'removed_bg.png');
-});
+  (function initFromHash(){
+    const hash = (location.hash || '').replace('#','');
+    if(!hash || hash === 'home'){
+      showHome(false);
+    } else {
+      const el = document.getElementById(hash);
+      if(el) showTool(hash, false);
+      else showHome(false);
+    }
+  })();
 
-/* passport composite & preview functions (same as earlier) */
-function compositePassport(personImg){
-  const OUT_W = 450, OUT_H = 570;
-  const c = document.createElement('canvas'); c.width = OUT_W; c.height = OUT_H;
-  const cctx = c.getContext('2d');
-
-  let bg = bgSel.value;
-  if(bg === 'custom') bg = bgColor.value || '#6ba0e6';
-  cctx.fillStyle = bg; cctx.fillRect(0,0,OUT_W,OUT_H);
-
-  const srcRatio = personImg.width / personImg.height;
-  const destRatio = OUT_W / OUT_H;
-  let drawW, drawH;
-  if(srcRatio > destRatio){
-    drawH = OUT_H; drawW = Math.round(personImg.width * (OUT_H / personImg.height));
-  } else {
-    drawW = OUT_W; drawH = Math.round(personImg.height * (OUT_W / personImg.width));
+  // Helpers
+  function humanFileSize(bytes) {
+    if(!bytes) return '';
+    const k = 1024, dm = 1;
+    const sizes = ['B','KB','MB','GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
   }
-  const dx = Math.round((OUT_W - drawW) / 2), dy = Math.round((OUT_H - drawH) / 2);
-  cctx.drawImage(personImg, dx, dy, drawW, drawH);
 
-  applyBrightnessContrast(c, Number(brightness.value), Number(contrast.value));
-  despillCanvas(c, bg, 0.88);
+  /* --- Image tools logic --- */
+  let lastGeneratedUrl = null;
+  function generateResized(){
+    const file = document.getElementById('resizeFile').files[0];
+    if(!file){ alert('Please choose an image'); return; }
 
-  return c;
-}
-function showPassportPreview(canvas){
-  latestPassportCanvas = canvas;
-  preview.width = Math.min(420, canvas.width);
-  preview.height = Math.round(preview.width * canvas.height / canvas.width);
-  ctx.clearRect(0,0,preview.width,preview.height);
-  ctx.drawImage(canvas, 0,0, canvas.width, canvas.height, 0,0, preview.width, preview.height);
-  dlPng.disabled = false; dlJpg.disabled = false; dlPsd.disabled = false;
-}
+    const w = parseInt(document.getElementById('w').value,10);
+    const h = parseInt(document.getElementById('h').value,10);
+    if(!w || !h){ alert('Enter valid width and height'); return; }
 
-/* image ops */
-function applyBrightnessContrast(canvas, bright=0, contrastVal=0){
-  const ctx2 = canvas.getContext('2d');
-  const img = ctx2.getImageData(0,0,canvas.width,canvas.height);
-  const data = img.data;
-  const b = bright;
-  const c = contrastVal/100;
-  const factor = (259 * (c*255 + 255)) / (255 * (259 - c*255) || 1);
-  for(let i=0;i<data.length;i+=4){
-    data[i] = clamp(factor * (clamp(data[i] + b) - 128) + 128);
-    data[i+1] = clamp(factor * (clamp(data[i+1] + b) - 128) + 128);
-    data[i+2] = clamp(factor * (clamp(data[i+2] + b) - 128) + 128);
+    const outFormat = document.getElementById('outFormat').value;
+    const bgFill = document.getElementById('bgFill').value;
+    const qualityInput = parseInt(document.getElementById('outQuality').value,10) || 90;
+    const quality = Math.max(0.1, Math.min(1, qualityInput/100));
+
+    setStatus('Loading image...');
+    const img = new Image();
+    img.onload = function(){
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      const ctx = canvas.getContext('2d');
+
+      let fill = bgFill;
+      if(fill === 'transparent'){
+        if(outFormat !== 'image/png'){
+          fill = '#ffffff';
+        } else {
+          ctx.clearRect(0,0,w,h);
+        }
+      }
+      if(fill && fill !== 'transparent'){
+        ctx.fillStyle = fill;
+        ctx.fillRect(0,0,w,h);
+      }
+
+      const iw = img.width, ih = img.height;
+      const scale = Math.min(w/iw, h/ih);
+      const dw = Math.round(iw * scale);
+      const dh = Math.round(ih * scale);
+      const dx = Math.round((w - dw)/2);
+      const dy = Math.round((h - dh)/2);
+      ctx.drawImage(img, 0, 0, iw, ih, dx, dy, dw, dh);
+
+      if(lastGeneratedUrl){ URL.revokeObjectURL(lastGeneratedUrl); lastGeneratedUrl = null; }
+
+      setStatus('Rendering...');
+      canvas.toBlob(function(blob){
+        if(!blob){ setStatus('Failed to render', true); return; }
+        const url = URL.createObjectURL(blob);
+        lastGeneratedUrl = url;
+
+        const previewWrap = document.getElementById('resPreview');
+        const previewImg = document.getElementById('resPreviewImg');
+        previewImg.src = url;
+        previewWrap.style.display = 'flex';
+
+        const origMeta = `${img.width} × ${img.height} — ${humanFileSize(file.size)}`;
+        document.getElementById('origMeta').textContent = origMeta;
+
+        const genMeta = `${w} × ${h} — ${humanFileSize(blob.size)} — ${outFormat.split('/')[1].toUpperCase()}`;
+        document.getElementById('genMeta').textContent = genMeta;
+
+        const dl = document.getElementById('downloadBtn');
+        dl.style.display = 'inline-block';
+        const ext = outFormat === 'image/png' ? 'png' : (outFormat === 'image/jpeg' ? 'jpg' : 'webp');
+        dl.dataset.url = url;
+        dl.dataset.name = `resized-${w}x${h}.${ext}`;
+
+        setStatus('Done');
+      }, outFormat, quality);
+    };
+    img.onerror = function(){ setStatus('Failed to load image', true); };
+    img.src = URL.createObjectURL(file);
   }
-  ctx2.putImageData(img,0,0);
-}
-function despillCanvas(canvas, bgHex='#6ba0e6', strength=0.85){
-  const ctx2 = canvas.getContext('2d');
-  const img = ctx2.getImageData(0,0,canvas.width,canvas.height);
-  const d = img.data;
-  for(let i=0;i<d.length;i+=4){
-    const r=d[i], g=d[i+1], b=d[i+2];
-    if(b > r + 12 && b > g + 12){
-      const diff = b - Math.max(r,g);
-      const reduce = Math.round(diff * strength);
-      d[i+2] = clamp(b - reduce);
-      d[i] = clamp(r + Math.round(reduce * 0.05));
-      d[i+1] = clamp(g + Math.round(reduce * 0.03));
+  function downloadResized(){
+    const dl = document.getElementById('downloadBtn');
+    const url = dl.dataset.url;
+    const name = dl.dataset.name || 'resized.png';
+    if(!url){ alert('No generated image yet'); return; }
+    const a = document.createElement('a'); a.href = url; a.download = name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setStatus('Downloaded');
+  }
+  function setStatus(msg, isError){
+    const el = document.getElementById('status');
+    if(!el) return;
+    el.textContent = msg || '';
+    el.style.color = isError ? '#ff8b8b' : 'var(--muted)';
+  }
+
+  // Converter
+  function convertImage(){
+    const file=document.getElementById('convertFile').files[0]; if(!file){ alert('Please choose an image'); return; }
+    const format=document.getElementById('format').value;
+    const img=new Image();
+    img.onload=function(){
+      const c=document.createElement('canvas'); c.width=img.width; c.height=img.height;
+      c.getContext('2d').drawImage(img,0,0);
+      const out=document.getElementById('convertResult'); out.innerHTML='';
+      const a=document.createElement('a'); a.download='converted'; a.href=c.toDataURL(format); a.textContent='Download converted image'; out.appendChild(a);
+    }
+    img.src=URL.createObjectURL(file);
+  }
+
+  // Compressor
+  function compressImage(){
+    const file=document.getElementById('compressFile').files[0]; if(!file){ alert('Please choose an image'); return; }
+    let q=parseInt(document.getElementById('quality').value,10);
+    if(isNaN(q) || q<1) q=10; if(q>100) q=100;
+    const quality=q/100;
+    const img=new Image();
+    img.onload=function(){
+      const c=document.createElement('canvas'); c.width=img.width; c.height=img.height;
+      c.getContext('2d').drawImage(img,0,0);
+      const out=document.getElementById('compressResult'); out.innerHTML='';
+      const a=document.createElement('a'); a.download='compressed.jpg'; a.href=c.toDataURL('image/jpeg',quality); a.textContent='Download compressed image'; out.appendChild(a);
+    }
+    img.src=URL.createObjectURL(file);
+  }
+
+  // URL → HTML
+  function sanitizeUrl(u){
+    u = u.trim();
+    if(!u) return '';
+    if(!/^[a-zA-Z][a-zA-Z0-9+\-.]*:\/\//.test(u)){
+      u = 'https://' + u;
+    }
+    return u;
+  }
+  function getDomainText(u){
+    try{ const urlObj = new URL(u); return urlObj.hostname.replace(/^www\./,''); }catch(e){ return u; }
+  }
+  function escapeHtml(str){
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+  function convertURLAdvanced(){
+    const input = document.getElementById('urlInput').value;
+    const lines = input.split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
+    if(lines.length === 0){ setUrlStatus('Please paste at least one URL', true); return; }
+
+    const newTab = document.getElementById('optNewTab').checked;
+    const addRel = document.getElementById('optRel').checked;
+    const useDomainText = document.getElementById('optAutoText').checked;
+    const outFmt = document.querySelector('input[name="outFmt"]:checked').value;
+
+    const relAttr = addRel ? ' rel="noopener noreferrer"' : '';
+    const targetAttr = newTab ? ' target="_blank"' : '';
+
+    const results = [];
+    for(const line of lines){
+      const s = sanitizeUrl(line);
+      if(!s) continue;
+      const text = useDomainText ? getDomainText(s) : line;
+      const a = `<a href="${escapeHtml(s)}"${targetAttr}${relAttr}>${escapeHtml(text)}</a>`;
+      results.push(a);
+    }
+
+    let out = '';
+    if(outFmt === 'lines') out = results.join('\n');
+    else out = '<p>\n' + results.map(r => '  ' + r + '<br>').join('\n') + '\n</p>';
+
+    document.getElementById('urlOutput').value = out;
+    setUrlStatus(`Converted ${results.length} URL(s).`, false);
+  }
+  function resetURLTool(){
+    document.getElementById('urlInput').value = '';
+    document.getElementById('urlOutput').value = '';
+    document.getElementById('optNewTab').checked = true;
+    document.getElementById('optRel').checked = false;
+    document.getElementById('optAutoText').checked = false;
+    document.querySelector('input[name="outFmt"][value="lines"]').checked = true;
+    setUrlStatus('', false);
+  }
+  function copyUrlOutput(){
+    const text = document.getElementById('urlOutput').value;
+    if(!text){ setUrlStatus('Nothing to copy', true); return; }
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(()=> setUrlStatus('Copied to clipboard ✔', false)).catch(()=> fallbackCopySimple(text));
+    } else { fallbackCopySimple(text); }
+  }
+  function fallbackCopySimple(text){
+    const ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select();
+    try{ document.execCommand('copy'); setUrlStatus('Copied to clipboard ✔', false); }catch(e){ setUrlStatus('Copy failed — select and copy manually', true); }
+    ta.remove();
+  }
+  function setUrlStatus(msg,isErr){ const el=document.getElementById('urlStatus'); el.textContent=msg||''; el.style.color=isErr?'#ff8b8b':'var(--muted)'; }
+
+  // 2048x1152 resizer
+  const TARGET_W = 2048;
+  const TARGET_H = 1152;
+  let generatedBlobURL = null;
+  async function generate2048(){
+    const fileInput = document.getElementById('file2048');
+    const file = fileInput.files[0];
+    if(!file){ alert('Please choose an image file first'); return; }
+
+    const mode = document.getElementById('mode2048').value;
+    const outfmt = document.getElementById('outfmt2048').value;
+    const qualityVal = parseInt(document.getElementById('outq2048').value,10) || 92;
+    const quality = Math.max(0.1, Math.min(1, qualityVal/100));
+
+    setStatus2048('Loading image...');
+    let img;
+    try { if(window.createImageBitmap) img = await createImageBitmap(file); else img = await loadImageViaElement(URL.createObjectURL(file)); }
+    catch(e){ img = await loadImageViaElement(URL.createObjectURL(file)); }
+
+    document.getElementById('origMeta2048').textContent = `${img.width} × ${img.height} — ${humanFileSize(file.size)}`;
+
+    const canvas = document.createElement('canvas');
+    canvas.width = TARGET_W; canvas.height = TARGET_H;
+    const ctx = canvas.getContext('2d');
+
+    if(outfmt === 'image/png' || outfmt === 'image/webp') ctx.clearRect(0,0,TARGET_W,TARGET_H);
+    else { ctx.fillStyle = '#0b1220'; ctx.fillRect(0,0,TARGET_W,TARGET_H); }
+
+    const iw = img.width, ih = img.height;
+    if(mode === 'fit'){
+      const scale = Math.min(TARGET_W / iw, TARGET_H / ih);
+      const dw = Math.round(iw * scale);
+      const dh = Math.round(ih * scale);
+      const dx = Math.round((TARGET_W - dw)/2);
+      const dy = Math.round((TARGET_H - dh)/2);
+      ctx.drawImage(img, 0, 0, iw, ih, dx, dy, dw, dh);
+    } else {
+      const scale = Math.max(TARGET_W / iw, TARGET_H / ih);
+      const dw = Math.round(iw * scale);
+      const dh = Math.round(ih * scale);
+      const dx = Math.round((TARGET_W - dw)/2);
+      const dy = Math.round((TARGET_H - dh)/2);
+      ctx.drawImage(img, 0, 0, iw, ih, dx, dy, dw, dh);
+    }
+
+    if(generatedBlobURL){ URL.revokeObjectURL(generatedBlobURL); generatedBlobURL = null; }
+
+    setStatus2048('Rendering...');
+    canvas.toBlob(function(blob){
+      if(!blob){ setStatus2048('Failed to render image.', true); return; }
+      const url = URL.createObjectURL(blob);
+      generatedBlobURL = url;
+
+      const preview = document.getElementById('previewImg');
+      preview.src = url;
+      document.getElementById('previewWrap').style.display = 'flex';
+
+      document.getElementById('genMeta2048').textContent = `${TARGET_W} × ${TARGET_H} — ${humanFileSize(blob.size)} — ${outfmt.split('/')[1].toUpperCase()}`;
+
+      const dl = document.getElementById('download2048');
+      dl.style.display = 'inline-block';
+      dl.dataset.blobUrl = url;
+      dl.dataset.filename = `photo-2048x1152.${outfmt === 'image/png' ? 'png' : (outfmt === 'image/jpeg' ? 'jpg' : 'webp')}`;
+      setStatus2048('Done.');
+      const cc = document.getElementById('canvasContainer'); cc.innerHTML = ''; cc.appendChild(canvas);
+    }, outfmt, quality);
+  }
+  function loadImageViaElement(src){ return new Promise((resolve,reject)=>{ const img=new Image(); img.onload=()=>resolve(img); img.onerror=(e)=>reject(e); img.src=src; }); }
+  function downloadGenerated(){ const dl=document.getElementById('download2048'); const url=dl.dataset.blobUrl; const filename=dl.dataset.filename||'photo-2048x1152.png'; if(!url){ alert('No generated image yet.'); return; } const a=document.createElement('a'); a.href=url; a.download=filename; document.body.appendChild(a); a.click(); a.remove(); setStatus2048('Downloaded'); }
+  function setStatus2048(msg,isErr){ const el=document.getElementById('status2048'); el.textContent=msg||''; el.style.color=isErr?'#ff8b8b':'var(--muted)'; }
+
+  // 500x500 interactive resizer
+  (function(){
+    const fileInput = document.getElementById('file500');
+    const canvas = document.getElementById('canvas500');
+    const ctx = canvas.getContext('2d');
+
+    const zoom = document.getElementById('zoom500');
+    const zoomVal = document.getElementById('zoomVal500');
+    const rot = document.getElementById('rot500');
+    const rotVal = document.getElementById('rotVal500');
+    const posX = document.getElementById('posX500');
+    const posXVal = document.getElementById('posXVal500');
+    const posY = document.getElementById('posY500');
+    const posYVal = document.getElementById('posYVal500');
+
+    const bgSel = document.getElementById('bg500');
+    const bgCustom = document.getElementById('bgCustom500');
+    const fmt = document.getElementById('fmt500');
+    const q = document.getElementById('q500');
+
+    const genBtn = document.getElementById('gen500');
+    const dlBtn = document.getElementById('dl500');
+    const resetBtn = document.getElementById('reset500');
+    const status = document.getElementById('status500');
+    const origInfo = document.getElementById('origInfo500');
+    const outInfo = document.getElementById('outInfo500');
+
+    let img = null;
+    let lastBlobUrl = null;
+
+    function setStatusLocal(msg,isErr){ status.textContent = msg||''; status.style.color = isErr ? '#ff8b8b' : 'var(--muted)'; }
+    function updateUIValues(){ zoomVal.textContent = Math.round(parseFloat(zoom.value)*100) + '%'; rotVal.textContent = rot.value + '°'; posXVal.textContent = posX.value + ' px'; posYVal.textContent = posY.value + ' px'; }
+
+    bgSel.addEventListener('change', ()=>{ if(bgSel.value === 'custom'){ bgCustom.style.display='inline-block'; } else { bgCustom.style.display='none'; } });
+
+    [zoom, rot, posX, posY].forEach(el=> el.addEventListener('input', ()=>{ updateUIValues(); renderPreview(); }));
+
+    fileInput.addEventListener('change', (e)=>{
+      const f = e.target.files[0];
+      if(!f) return;
+      const url = URL.createObjectURL(f);
+      const i = new Image();
+      i.onload = function(){
+        img = i;
+        origInfo.textContent = `${img.width}×${img.height} • ${Math.round(f.size/1024)} KB`;
+        renderPreview();
+        URL.revokeObjectURL(url);
+      }
+      i.onerror = function(){ setStatusLocal('Failed to load image', true); }
+      i.src = url;
+    });
+
+    function clearLastBlob(){ if(lastBlobUrl){ URL.revokeObjectURL(lastBlobUrl); lastBlobUrl = null; } }
+
+    function renderPreview(){
+      ctx.clearRect(0,0,500,500);
+      let bg = bgSel.value;
+      if(bg === 'custom'){ bg = bgCustom.value || '#ffffff'; }
+      if(bg !== 'transparent'){ ctx.fillStyle = bg; ctx.fillRect(0,0,500,500); } else { ctx.clearRect(0,0,500,500); }
+
+      if(!img) return;
+
+      ctx.save();
+      const cx = 250 + parseInt(posX.value,10);
+      const cy = 250 + parseInt(posY.value,10);
+      ctx.translate(cx, cy);
+      const angle = parseFloat(rot.value) * Math.PI / 180;
+      ctx.rotate(angle);
+      const scale = parseFloat(zoom.value);
+      const iw = img.width, ih = img.height;
+      const drawW = iw * scale;
+      const drawH = ih * scale;
+      ctx.drawImage(img, -drawW/2, -drawH/2, drawW, drawH);
+      ctx.restore();
+    }
+
+    genBtn.addEventListener('click', ()=>{
+      if(!img){ setStatusLocal('Please choose an image first', true); return; }
+      setStatusLocal('Rendering...');
+      const outCanvas = document.createElement('canvas');
+      outCanvas.width = 500; outCanvas.height = 500;
+      const outCtx = outCanvas.getContext('2d');
+
+      let bg = bgSel.value;
+      if(bg === 'custom'){ bg = bgCustom.value || '#ffffff'; }
+      if(bg === 'transparent' && fmt.value !== 'image/png'){ bg = '#ffffff'; }
+      if(bg !== 'transparent'){ outCtx.fillStyle = bg; outCtx.fillRect(0,0,500,500); } else { outCtx.clearRect(0,0,500,500); }
+
+      outCtx.save();
+      const cx = 250 + parseInt(posX.value,10);
+      const cy = 250 + parseInt(posY.value,10);
+      outCtx.translate(cx, cy);
+      const angle = parseFloat(rot.value) * Math.PI / 180;
+      outCtx.rotate(angle);
+      const scale = parseFloat(zoom.value);
+      const iw = img.width, ih = img.height;
+      const drawW = iw * scale;
+      const drawH = ih * scale;
+      outCtx.drawImage(img, -drawW/2, -drawH/2, drawW, drawH);
+      outCtx.restore();
+
+      const outFormat = fmt.value;
+      const quality = Math.max(0.1, Math.min(1, (parseInt(q.value,10)||92)/100));
+      clearLastBlob();
+      outCanvas.toBlob(function(blob){
+        if(!blob){ setStatusLocal('Failed to render', true); return; }
+        const url = URL.createObjectURL(blob);
+        lastBlobUrl = url;
+        dlBtn.style.display = 'inline-block';
+        dlBtn.dataset.url = url;
+        const ext = outFormat === 'image/png' ? 'png' : (outFormat === 'image/jpeg' ? 'jpg' : 'webp');
+        dlBtn.dataset.name = `photo-500x500.${ext}`;
+        outInfo.textContent = `500×500 • ${Math.round(blob.size/1024)} KB • ${ext.toUpperCase()}`;
+        setStatusLocal('Done.');
+        const finalImg = new Image();
+        finalImg.onload = function(){
+          ctx.clearRect(0,0,500,500);
+          if(bg !== 'transparent'){ ctx.fillStyle = bg; ctx.fillRect(0,0,500,500); } else { ctx.clearRect(0,0,500,500); }
+          ctx.drawImage(finalImg, 0,0);
+        }
+        finalImg.src = url;
+      }, outFormat, quality);
+    });
+
+    document.getElementById('dl500').addEventListener('click', ()=>{
+      const url = document.getElementById('dl500').dataset.url;
+      const name = document.getElementById('dl500').dataset.name || 'photo-500x500.png';
+      if(!url){ setStatusLocal('Nothing to download', true); return; }
+      const a = document.createElement('a'); a.href = url; a.download = name;
+      document.body.appendChild(a); a.click(); a.remove();
+      setStatusLocal('Downloaded');
+    });
+
+    resetBtn.addEventListener('click', ()=>{
+      fileInput.value = '';
+      img = null;
+      zoom.value = '1'; rot.value = '0'; posX.value = '0'; posY.value = '0';
+      bgSel.value = 'transparent'; bgCustom.style.display='none'; bgCustom.value='';
+      fmt.value = 'image/png'; q.value = '92';
+      updateUIValues();
+      ctx.clearRect(0,0,500,500);
+      origInfo.textContent = '';
+      outInfo.textContent = '';
+      document.getElementById('dl500').style.display = 'none';
+      clearLastBlob();
+      setStatusLocal('');
+    });
+
+    updateUIValues();
+  })();
+
+  // Description Shorter
+  function shortenDescription(){
+    const input = document.getElementById('descInput').value || '';
+    const limitVal = parseInt(document.getElementById('charLimit').value, 10) || 0;
+    const mode = document.getElementById('shortMode').value;
+    const addEll = document.getElementById('addEllipsis').checked;
+    const statusEl = document.getElementById('descStatus');
+    const outEl = document.getElementById('descOutput');
+    statusEl.textContent = ''; outEl.value = '';
+    if(!input.trim()){ statusEl.textContent = 'Please paste a description first.'; statusEl.style.color = '#ff8b8b'; return; }
+    if(limitVal < 10){ statusEl.textContent = 'Please set a sensible character limit (>=10).'; statusEl.style.color = '#ff8b8b'; return; }
+    const clean = input.replace(/\s+/g, ' ').trim();
+    if(clean.length <= limitVal){ outEl.value = clean; statusEl.textContent = 'Input already within limit — no change.'; statusEl.style.color = 'var(--muted)'; return; }
+
+    let result = '';
+    if(mode === 'hard'){
+      result = clean.slice(0, limitVal);
+      result = result.replace(/\s+$/,'');
+      if(addEll) result = result + '...';
+    } else if(mode === 'word'){
+      const chunk = clean.slice(0, limitVal + 1);
+      const lastSpace = chunk.lastIndexOf(' ');
+      if(lastSpace > 5) result = chunk.slice(0, lastSpace);
+      else result = clean.slice(0, limitVal);
+      result = result.replace(/\s+$/,'');
+      if(addEll) result = result + '...';
+    } else if(mode === 'sentence'){
+      const sentences = clean.match(/[^.!?]+[.!?]*/g) || [clean];
+      let acc = '';
+      for(const s of sentences){
+        if((acc + ' ' + s).trim().length <= limitVal) acc = (acc + ' ' + s).trim();
+        else break;
+      }
+      if(!acc){
+        const chunk = clean.slice(0, limitVal + 1);
+        const lastSpace = chunk.lastIndexOf(' ');
+        result = lastSpace > 5 ? chunk.slice(0,lastSpace) : clean.slice(0,limitVal);
+        result = result.replace(/\s+$/,'');
+        if(addEll) result = result + '...';
+      } else {
+        result = acc;
+        if(addEll && acc.length < clean.length) result = result + '...';
+      }
+    } else {
+      result = clean.slice(0, limitVal);
+      if(addEll) result = result + '...';
+    }
+
+    outEl.value = result;
+    statusEl.textContent = `Shortened to ${result.length} characters.`;
+    statusEl.style.color = 'var(--muted)';
+  }
+  function copyDescOutput(){
+    const text = document.getElementById('descOutput').value;
+    const statusEl = document.getElementById('descStatus');
+    if(!text){ statusEl.textContent = 'Nothing to copy'; statusEl.style.color = '#ff8b8b'; return; }
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(()=>{ statusEl.textContent = 'Copied to clipboard ✔'; statusEl.style.color = 'var(--muted)'; }).catch(()=> fallbackCopyDesc(text,statusEl));
+    } else { fallbackCopyDesc(text,statusEl); }
+  }
+  function fallbackCopyDesc(text,statusEl){
+    const ta=document.createElement('textarea'); ta.value=text; document.body.appendChild(ta); ta.select();
+    try{ document.execCommand('copy'); statusEl.textContent='Copied to clipboard ✔'; statusEl.style.color='var(--muted)'; }catch(e){ statusEl.textContent='Copy failed — select and copy manually'; statusEl.style.color='#ff8b8b'; }
+    ta.remove();
+  }
+  function resetDescTool(){
+    document.getElementById('descInput').value=''; document.getElementById('descOutput').value=''; document.getElementById('charLimit').value=160; document.getElementById('shortMode').value='word'; document.getElementById('addEllipsis').checked=true; document.getElementById('descStatus').textContent='';
+  }
+
+  // Link Shuffle logic
+  (function(){
+    const input = document.getElementById('inputLinks');
+    const output = document.getElementById('outputLinks');
+    const charCount = document.getElementById('charCount');
+    const countNum = document.getElementById('countNum');
+    const shuffleBtn = document.getElementById('shuffleBtn');
+    const copyBtn = document.getElementById('copyBtn');
+    const clearBtn = document.getElementById('clearBtn');
+
+    function updateCharCount() { charCount.textContent = input.value.length; }
+    input.addEventListener('input', updateCharCount);
+
+    function getNonEmptyLines(text) {
+      return text.split(/\r?\n/).map(line => line.trim()).filter(line => line.length > 0);
+    }
+
+    function shuffleArray(arr) {
+      const a = arr.slice();
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
+
+    shuffleBtn.addEventListener('click', () => {
+      const lines = getNonEmptyLines(input.value);
+      if (lines.length === 0) {
+        output.value = '';
+        countNum.textContent = '0';
+        return;
+      }
+      const shuffled = shuffleArray(lines);
+      output.value = shuffled.join('\n');
+      countNum.textContent = String(shuffled.length);
+    });
+
+    copyBtn.addEventListener('click', async () => {
+      try {
+        const text = output.value;
+        if (!text) return;
+        await navigator.clipboard.writeText(text);
+        const prev = copyBtn.textContent;
+        copyBtn.textContent = 'COPIED!';
+        setTimeout(()=> copyBtn.textContent = prev, 1200);
+      } catch (err) {
+        // fallback
+        output.select();
+        document.execCommand('copy');
+        const prev = copyBtn.textContent;
+        copyBtn.textContent = 'COPIED!';
+        setTimeout(()=> copyBtn.textContent = prev, 1200);
+      }
+    });
+
+    clearBtn.addEventListener('click', () => {
+      input.value = '';
+      output.value = '';
+      updateCharCount();
+      countNum.textContent = '0';
+    });
+
+    input.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        e.preventDefault();
+        shuffleBtn.click();
+      }
+    });
+
+    updateCharCount();
+  })();
+
+  // small tile hover effect
+  (function(){
+    const tiles = document.querySelectorAll('.tile');
+    tiles.forEach(tile=>{
+      tile.addEventListener('mousemove', (e)=>{
+        const r = tile.getBoundingClientRect();
+        const cx = r.left + r.width/2;
+        const cy = r.top + r.height/2;
+        const dx = e.clientX - cx;
+        const dy = e.clientY - cy;
+        const ry = (dx / r.width) * 6;
+        const rx = -(dy / r.height) * 6;
+        tile.style.transform = `rotateX(${rx}deg) rotateY(${ry}deg) translateZ(0) translateY(-6px)`;
+      });
+      tile.addEventListener('mouseleave', ()=>{ tile.style.transform = ''; });
+      // keyboard: Enter/Space triggers click
+      tile.addEventListener('keydown', (ev)=>{
+        if(ev.key === 'Enter' || ev.key === ' '){ ev.preventDefault(); tile.click(); }
+      });
+    });
+  })();
+
+  // ensure initial history state
+  (function ensureInitialState(){
+    if(!history.state){
+      try { history.replaceState({page:'home'}, '', location.hash || '#home'); }
+      catch(e){ /* ignore */ }
+    }
+  })();
+
+  /* Footer doc-panel logic */
+  function openDoc(name){
+    const panel = document.getElementById('docPanel');
+    const titleEl = document.getElementById('docTitle');
+    const contentEl = document.getElementById('docContent');
+    panel.classList.add('active'); panel.setAttribute('aria-hidden','false');
+
+    if(name === 'about'){
+      titleEl.textContent = 'About';
+      contentEl.innerHTML = `<p>About — PixelKit: আমরা দ্রুত, সুন্দর এবং ব্যবহারবান্ধ্য ইমেজ টুল প্রদান করি। আমাদের লক্ষ্য হচ্ছে সৃজনশীলদের জন্য সহজ, ওয়েব-বেসড সলিউশন তৈরি করা — কোভার মেকার, লোগো রিসাইজ, কনভার্টর এবং আরও অনেক।</p>`;
+    } else if(name === 'contact'){
+      titleEl.textContent = 'Contact';
+      contentEl.innerHTML = `<p>Contact (Professional):</p>
+        <ul>
+          <li>Email: <a href="mailto:litonshakh5@gmail.com">litonshakh5@gmail.com</a></li>
+          <li>Facebook: <a href="https://www.facebook.com/nbliton2/" target="_blank" rel="noopener">facebook.com/nbliton2</a></li>
+          <li>X: <a href="https://x.com/LitonShakh1" target="_blank" rel="noopener">@LitonShakh1</a></li>
+          <li>WhatsApp: <a href="https://wa.me/message/2KKCICT25LSYM1" target="_blank" rel="noopener">Message on WhatsApp</a></li>
+        </ul>
+        <p style="margin-top:10px">For business inquiries, please email us with a short summary of your project and we will get back promptly.</p>`;
+    } else if(name === 'terms'){
+      titleEl.textContent = 'Terms & Conditions';
+      contentEl.innerHTML = `<p><strong>Terms &amp; Conditions</strong></p>
+        <p>স্বাগত — PixelKit ব্যবহার করার পূর্বে অনুগ্রহ করে নিম্নলিখিত শর্তাবলী পড়ুন। এই সেবাটি ক্লায়েন্ট-সাইড ইমেজ প্রসেসিং সরঞ্জাম হিসেবে প্রদান করা হয়। ব্যবহারকারীর দ্বারা আপলোড করা ফাইল সম্পূর্ণরূপে ব্যবহারকারীর নিজস্ব দায়িত্ব।</p>
+        <p>১. কন্টেন্ট: আপনি নিশ্চিত করবেন যে আপলোড করা কোনো কন্টেন্ট কপিরাইট লঙ্ঘন করে না।<br>
+        ২. দায়-মুক্তি: PixelKit দ্বারা জেনারেটেড ছবি বা ফলাফল ব্যবহারে কোনো ধার্য ক্ষতির জন্য PixelKit দায়ী থাকবে না।<br>
+        ৩. সার্ভিস: আমরা jederzeit সেবা পরিবর্তন বা বন্ধ করার অধিকার রাখি।</p>
+        <p>এই শর্তাবলীর আরও বিস্তারিত তথ্য বা আইনি প্রশ্নের জন্য আমাদের ইমেল করুন।</p>`;
+    } else if(name === 'privacy'){
+      titleEl.textContent = 'Privacy & Policy';
+      contentEl.innerHTML = `<p><strong>Privacy &amp; Policy</strong></p>
+        <p>PixelKit আপনার ব্যক্তিগত তথ্যকে গুরুত্বসহকারে নেয়। আমাদের মূল নীতি: আমরা কোনো ব্যবহারকারীর ব্যক্তিগত ফাইল সার্ভারে সংরক্ষণ করি না — সব অপারেশন ক্লায়েন্ট-সাইড (আপনার ব্রাউজারে) সম্পন্ন হয়।</p>
+        <p>আপনি যে ইমেইল বা যোগাযোগ তথ্য সরবরাহ করবেন তা কেবল যোগাযোগের উদ্দেশ্যে ব্যবহার করা হবে। কোনো তৃতীয় পক্ষকে আপনার তথ্য বিক্রি করা হবে না।</p>
+        <p>আরও প্রশ্ন থাকলে, অনুগ্রহ করে <a href="mailto:litonshakh5@gmail.com">litonshakh5@gmail.com</a>-এ যোগাযোগ করুন।</p>`;
     }
   }
-  ctx2.putImageData(img,0,0);
-}
-function clamp(v){ return Math.max(0, Math.min(255, Math.round(v))); }
-function rgbToHex(r,g,b){ return '#' + [r,g,b].map(x => x.toString(16).padStart(2,'0')).join(''); }
+  function closeDoc(){ const panel=document.getElementById('docPanel'); panel.classList.remove('active'); panel.setAttribute('aria-hidden','true'); }
 
-/* downloads for passport */
-dlPng.addEventListener('click', ()=> {
-  if(!latestPassportCanvas) return alert('Generate passport first');
-  latestPassportCanvas.toBlob(b => downloadBlob(b, 'passport.png'), 'image/png');
-});
-dlJpg.addEventListener('click', ()=> {
-  if(!latestPassportCanvas) return alert('Generate passport first');
-  latestPassportCanvas.toBlob(b => downloadBlob(b, 'passport.jpg'), 'image/jpeg', 0.92);
-});
-dlPsd.addEventListener('click', ()=> {
-  if(!latestPassportCanvas) return alert('Generate passport first');
-  try{
-    const ag = window['agPsd'];
-    const psd = { width: latestPassportCanvas.width, height: latestPassportCanvas.height, children: [ { name: 'Layer 1', left:0, top:0, right: latestPassportCanvas.width, bottom: latestPassportCanvas.height, canvas: latestPassportCanvas } ] };
-    const ab = ag.encodePsd(psd);
-    const blob = new Blob([ab], { type: 'application/octet-stream' });
-    downloadBlob(blob, 'passport.psd');
-  }catch(e){
-    console.error(e);
-    alert('PSD export failed: ' + (e.message || e));
-  }
-});
+  // close panel when clicking outside
+  window.addEventListener('click', (e)=>{
+    const panel=document.getElementById('docPanel');
+    if(!panel.classList.contains('active')) return;
+    if(!panel.contains(e.target) && !e.target.closest('.site-footer')){ closeDoc(); }
+  });
 
-/* reset */
-resetBtn.addEventListener('click', ()=> {
-  uploadedFile = null; origImage = null; removedBlob = null; latestPassportCanvas = null; fileInput.value = '';
-  ctx.clearRect(0,0,preview.width,preview.height);
-  dlRemoved.disabled = dlPng.disabled = dlJpg.disabled = dlPsd.disabled = true;
-  updatePreviewBackground();
-});
+  // keyboard escape
+  window.addEventListener('keydown', (e)=>{ if(e.key === 'Escape'){ closeDoc(); } });
 
-/* utility drawChecker */
-function drawChecker(width, height, size=12){
-  const cols = Math.ceil(width / size), rows = Math.ceil(height / size);
-  const cw = preview.width / cols, ch = preview.height / rows;
-  for(let y=0;y<rows;y++){
-    for(let x=0;x<cols;x++){
-      ctx.fillStyle = ((x+y)%2===0) ? '#c9dfe6' : '#f5fbff';
-      ctx.fillRect(x*cw, y*ch, cw, ch);
-    }
-  }
-}
+  /* Accessibility checklist (1-line): ensure all <img> have alt, interactive tiles have role/button + tabindex, keyboard Enter/Space triggers click, and color contrast checked for small text. */
+
 </script>
 </body>
 </html>
-
